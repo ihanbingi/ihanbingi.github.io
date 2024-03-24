@@ -6,6 +6,6 @@
 
 [Get Started](README)
 
-![](logo.jpg)
+![](logo.png)
 
 

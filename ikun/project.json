@@ -1,0 +1,65 @@
+{
+	"contentrating" : "Everyone",
+	"description" : "动态壁纸制作\n哔哩哔哩：Hope麻匪\nhttps://space.bilibili.com/111174060\n\n作者：\n哔哩哔哩：https://space.bilibili.com/31467\n微博：https://weibo.com/1197780522/M2xbREtGI\nGitHub：https://github.com/itorr/sakana",
+	"file" : "index.html",
+	"general" : 
+	{
+		"properties" : 
+		{
+			"hope" : 
+			{
+				"index" : 3,
+				"order" : 103,
+				"text" : "壁纸免费",
+				"type" : "textinput",
+				"value" : "禁止贩卖"
+			},
+			"logo" : 
+			{
+				"index" : 0,
+				"order" : 100,
+				"text" : "<img src='http://m.qpic.cn/psc?/V12uhwIt3z28yp/bqQfVz5yrrGYSXMvKr.cqSF.*RaTqLFzr86N9EuoDN4nRLGP3a.X9rtw.tsnRh*i7J6Ys7CPxuV4UY0yhigma9023ByDaD5n5tpcicJ6V5Q!/b&bo=HgEIAAAAAAACJxQ!&rf=viewer_4'><center><a href='https://space.bilibili.com/111174060/'><img src='http://m.qpic.cn/psc?/V12uhwIt3z28yp/TmEUgtj9EK6.7V8ajmQrEMbA*d4VCVE9EmVsV3pBy9y*3.QaYcj7Djd8cIg2oFGfFlRwzfegCrdk2gg2w.WKBGZ9eGbytXae1X.5Y5xng1g!/b&bo=HgGZAAAAAAADF7Q!&rf=viewer_4'></a></center>",
+				"type" : "text"
+			},
+			"newproperty" : 
+			{
+				"index" : 2,
+				"order" : 102,
+				"text" : "同名平台",
+				"type" : "textinput",
+				"value" : "哔哩哔哩 抖音 快手"
+			},
+			"newproperty1" : 
+			{
+				"index" : 1,
+				"order" : 101,
+				"text" : "Hope麻匪",
+				"type" : "textinput",
+				"value" : "动态制作"
+			},
+			"schemecolor" : 
+			{
+				"order" : 0,
+				"text" : "ui_browse_properties_scheme_color",
+				"type" : "color",
+				"value" : "0 0 0"
+			},
+			"xian" : 
+			{
+				"index" : 4,
+				"order" : 104,
+				"text" : "<img src='http://m.qpic.cn/psc?/V12uhwIt3z28yp/bqQfVz5yrrGYSXMvKr.cqbDiE.KukmsItmGSEqzsPMASzzlZBBlgG3mW8u*r6SMbHE.HaDfBmEWWIBvlOepEv9FPCoAJWj7wI3Bh4teGSaA!/b&bo=HgEIAAAAAAACJxQ!&rf=viewer_4'><hr>",
+				"type" : "text",
+				"value" : false
+			}
+		}
+	},
+	"preview" : "preview.gif",
+	"tags" : [ "Game" ],
+	"title" : "麻匪 石蒜模拟器 - Sakana🐟~",
+	"type" : "web",
+	"version" : 1,
+	"visibility" : "public",
+	"workshopid" : "2854192204",
+	"workshopurl" : "steam://url/CommunityFilePage/2854192204"
+}

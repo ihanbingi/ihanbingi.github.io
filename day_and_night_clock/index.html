@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>day and night clock</title>
+    <style>
+        * {
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        html[data-theme='light'] {
+            --color-bg: #1e2022;
+            --color-font: #52616b;
+            --color-font2: #c9d6df;
+            --item-box-shadow: #181a1b;
+            --item-box-shadow02: #242629;
+        }
+
+        :root {
+            --fontsize: 36px;
+            --itemsWidth: 60px;
+            --color-bg: #DEE9F2;
+            --color-font: #b6cde2;
+            --color-font2: #82AACE;
+            --item-box-shadow: #c8d2da;
+            --item-box-shadow02: #F0F7FF;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-font);
+            transition: all 300ms;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            height: 70px;
+            border-radius: 10px;
+            transform: scale(1);
+            font-weight: bolder;
+        }
+
+        .item {
+            color: var(--color-font2);
+            transform: scale(1.5);
+            background: var(--color-bg);
+            box-shadow: 5px 5px 10px var(--item-box-shadow),
+                -5px -5px 10px var(--item-box-shadow02);
+        }
+
+        .container div {
+            transition: all 0.5s;
+            height: fit-content;
+            margin: 0 20px;
+            border-radius: 10px;
+            background: var(--color-bg);
+            box-shadow: 5px 5px 10px var(--item-box-shadow),
+                -5px -5px 10px var(--item-box-shadow02);
+        }
+
+        .container div:nth-child(3),
+        .container div:nth-child(5) {
+            margin-left: 80px;
+        }
+
+        .container div span {
+            display: block;
+            border-radius: 50%;
+            margin: 10px 0px;
+            transition: all 1s;
+            width: var(--itemsWidth);
+            height: var(--itemsWidth);
+            text-align: center;
+            line-height: var(--itemsWidth);
+            font-size: var(--fontsize);
+        }
+
+        .buttons {
+            position: fixed;
+            right: 30px;
+            top: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            position: relative;
+            background-color: var(--color-bg);
+            box-shadow: 5px 5px 10px var(--item-box-shadow),
+                -5px -5px 10px var(--item-box-shadow02);
+            padding: 0.75rem;
+            border-radius: 99px;
+        }
+
+        .tabs * {
+            z-index: 2;
+        }
+
+        .tapcontainer input[type="radio"] {
+            display: none;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 30px;
+            width: 50px;
+            font-size: .8rem;
+            color: var(--color-font);
+            font-weight: 500;
+            border-radius: 99px;
+            cursor: pointer;
+            transition: color 0.15s ease-in;
+            font-weight: bolder;
+        }
+
+        .tapcontainer input[type="radio"]:checked+label {
+            color: var(--color-font2);
+        }
+
+        .tapcontainer input[type="radio"]:checked+label>.notification {
+            background-color: var(--color-font2);
+            color: var(--color-font);
+            margin: 0px;
+        }
+
+        .tapcontainer input[id="radio-1"]:checked~.glider {
+            transform: translateX(0);
+        }
+
+        .tapcontainer input[id="radio-2"]:checked~.glider {
+            transform: translateX(100%);
+        }
+
+        .tapcontainer input[id="radio-3"]:checked~.glider {
+            transform: translateX(200%);
+        }
+
+        .glider {
+            position: absolute;
+            display: flex;
+            height: 30px;
+            width: 50px;
+            background-color: var(--color-font);
+            z-index: 1;
+            border-radius: 99px;
+            transition: 0.25s ease-out;
+        }
+
+        @media (max-width: 700px) {
+
+            .tabs {
+                transform: scale(0.6);
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+    <div class="container">
+        <div class="hours">
+            <span>0</span><span>1</span><span>2</span>
+        </div>
+        <div class="hours2">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+        </div>
+        <div class="Minutes">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+        </div>
+        <div class="Minutes2">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+        </div>
+        <div class="Seconds">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+        </div>
+        <div class="Seconds2">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+        </div>
+    </div>
+    <div class="buttons">
+        <div class="tapcontainer">
+            <div class="tabs" style="--size: 20px;">
+                <input type="radio" id="radio-1" name="tabs" checked=""><label class="tab" for="radio-1">
+                    <svg data-v-37f4b987="" viewBox="0 0 48 48" style="width: var(--size); height: var(--size);"
+                        fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"
+                        class="arco-icon arco-icon-desktop" stroke-width="4" stroke-linecap="butt"
+                        stroke-linejoin="miter">
+                        <path
+                            d="M24 32v8m0 0h-9m9 0h9M7 32h34a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v22a1 1 0 0 0 1 1Z">
+                        </path>
+                    </svg>
+                </label>
+                <input type="radio" id="radio-2" name="tabs"><label class="tab" for="radio-2">
+                    <svg data-v-37f4b987="" viewBox="0 0 48 48" style="width: var(--size); height: var(--size);"
+                        fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"
+                        class="arco-icon arco-icon-sun-fill" stroke-width="4" stroke-linecap="butt"
+                        stroke-linejoin="miter">
+                        <circle cx="24" cy="24" r="9" fill="currentColor" stroke="none"></circle>
+                        <path
+                            d="M21 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5ZM21 37.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5ZM42.5 21a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5a.5.5 0 0 1 .5-.5h5ZM10.5 21a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-5a.5.5 0 0 1-.5-.5v-5a.5.5 0 0 1 .5-.5h5ZM39.203 34.96a.5.5 0 0 1 0 .707l-3.536 3.536a.5.5 0 0 1-.707 0l-3.535-3.536a.5.5 0 0 1 0-.707l3.535-3.535a.5.5 0 0 1 .707 0l3.536 3.535ZM16.575 12.333a.5.5 0 0 1 0 .707l-3.535 3.535a.5.5 0 0 1-.707 0L8.797 13.04a.5.5 0 0 1 0-.707l3.536-3.536a.5.5 0 0 1 .707 0l3.535 3.536ZM13.04 39.203a.5.5 0 0 1-.707 0l-3.536-3.536a.5.5 0 0 1 0-.707l3.536-3.535a.5.5 0 0 1 .707 0l3.536 3.535a.5.5 0 0 1 0 .707l-3.536 3.536ZM35.668 16.575a.5.5 0 0 1-.708 0l-3.535-3.535a.5.5 0 0 1 0-.707l3.535-3.536a.5.5 0 0 1 .708 0l3.535 3.536a.5.5 0 0 1 0 .707l-3.535 3.535Z"
+                            fill="currentColor" stroke="none"></path>
+                    </svg>
+                </label>
+                <input type="radio" id="radio-3" name="tabs"><label class="tab" for="radio-3">
+                    <svg data-v-37f4b987="" viewBox="0 0 48 48" style="width: var(--size); height: var(--size);"
+                        fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"
+                        class="arco-icon arco-icon-moon-fill" stroke-width="4" stroke-linecap="butt"
+                        stroke-linejoin="miter">
+                        <path
+                            d="M42.108 29.769c.124-.387-.258-.736-.645-.613A17.99 17.99 0 0 1 36 30c-9.941 0-18-8.059-18-18 0-1.904.296-3.74.844-5.463.123-.387-.226-.768-.613-.645C10.558 8.334 5 15.518 5 24c0 10.493 8.507 19 19 19 8.482 0 15.666-5.558 18.108-13.231Z"
+                            fill="currentColor" stroke="none"></path>
+                    </svg>
+                </label>
+                <span class="glider"></span>
+            </div>
+        </div>
+    </div>
+    <script>
+        class ThemeSwitcher {
+            constructor() {
+                this.dom = document.querySelectorAll('.container div');
+                this.uiSwitch = document.querySelector('.tabs');
+                this.autoNum = '1';
+                this.uiSwitch.addEventListener('click', this.handleSwitchClick.bind(this));
+                this.init();
+            }
+            getTime() {
+                const num0 = (num) => (num >= 10 ? num : '0' + num);
+                const time = new Date();
+                const hours = num0(time.getHours());
+                const minutes = num0(time.getMinutes());
+                const seconds = num0(time.getSeconds());
+                return `${hours}${minutes}${seconds}`;
+            }
+            autoTap() {
+                const currentTime = this.getTime();
+                let theme = '';
+                console.log(this.autoNum)
+                if (this.autoNum === '2') {
+                    theme = 'dark';
+                } else if (this.autoNum === '3') {
+                    theme = 'light';
+                } else {
+                    // const hour = parseInt(currentTime.substr(0, 2));
+                    // const isNight = (hour >= 0 && hour < 6) || (hour >= 18 && hour <= 24);
+                    // theme = isNight ? 'light' : '';
+                    const isDarkTheme = window.matchMedia("(prefers-color-scheme: dark)"); // 是深色
+                    console.log(isDarkTheme.matches);
+                    if (isDarkTheme.matches) {
+                        // 主题设置为深色。
+                        theme = 'light';
+                    } else {
+                        // 主题设置为浅色。
+                        theme = '';
+                    }
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            upTime() {
+                if (this.upTime.isRunning) {
+                    return;
+                }
+                this.upTime.isRunning = true;
+                const nowTime = this.getTime();
+                const classDom = document.querySelectorAll('.item');
+                classDom.forEach((element) => {
+                    element.classList.remove('item');
+                });
+                nowTime.split('').forEach((time, i) => {
+                    const weizhi = 70 * parseInt(time);
+                    const currentDom = this.dom[i].children[parseInt(time)];
+                    currentDom.classList.add('item');
+                    this.dom[i].style.transform = `translateY(0px) translateY(-${weizhi}px)`;
+                });
+                this.autoTap();
+                this.upTime.isRunning = false;
+            }
+            init() {
+                this.upTime();
+                setInterval(this.upTime.bind(this), 1000);
+                window.wallpaperPropertyListener = {
+                    applyUserProperties: (properties) => {
+                        if (properties.autodarklight) {
+                            const value = properties.autodarklight.value;
+                            this.autoNum = value;
+                            document.querySelector(`#radio-${this.autoNum}`).checked = true;
+                            this.autoTap();
+                        }
+                    },
+                };
+            }
+            handleSwitchClick(e) {
+                const uiSwitchdom = e.target;
+                const dom_id = uiSwitchdom.id;
+                if (uiSwitchdom.tagName.toLowerCase() !== 'input') {
+                    return;
+                }
+                this.autoNum = dom_id === 'radio-1' ? '1' : (dom_id === 'radio-2' ? '2' : '3');
+                this.autoTap();
+            }
+        }
+        const themeSwitcher = new ThemeSwitcher();
+    </script>
+</body>
+
+</html>

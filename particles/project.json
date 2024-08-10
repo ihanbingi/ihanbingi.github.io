@@ -1,0 +1,176 @@
+{
+	"contentrating" : "Everyone",
+	"description" : "",
+	"file" : "gravityPoints.html",
+	"general" : 
+	{
+		"properties" : 
+		{
+			"ag" : 
+			{
+				"fraction" : true,
+				"index" : 11,
+				"max" : 20,
+				"min" : 0,
+				"order" : 111,
+				"precision" : 2,
+				"step" : 0.1,
+				"text" : "点击时反重力大小",
+				"type" : "slider",
+				"value" : 5
+			},
+			"bg" : 
+			{
+				"index" : 1,
+				"options" : 
+				[
+					{
+						"label" : "纯色",
+						"value" : "0"
+					},
+					{
+						"label" : "图片",
+						"value" : "1"
+					}
+				],
+				"order" : 101,
+				"text" : "背景",
+				"type" : "combo",
+				"value" : "0"
+			},
+			"bgcolor" : 
+			{
+				"condition" : "bg.value==0",
+				"index" : 2,
+				"order" : 102,
+				"text" : "背景颜色",
+				"type" : "color",
+				"value" : "0 0 0"
+			},
+			"bgimage" : 
+			{
+				"condition" : "bg.value==1",
+				"index" : 3,
+				"order" : 103,
+				"text" : "背景图片",
+				"type" : "file",
+				"value" : ""
+			},
+			"fps" : 
+			{
+				"index" : 12,
+				"order" : 112,
+				"text" : "显示FPS",
+				"type" : "bool",
+				"value" : false
+			},
+			"g" : 
+			{
+				"condition" : "isgrset.value==false",
+				"fraction" : true,
+				"index" : 7,
+				"max" : 10,
+				"min" : 0,
+				"order" : 107,
+				"precision" : 2,
+				"step" : 0.1,
+				"text" : "重力加速度",
+				"type" : "slider",
+				"value" : 1
+			},
+			"g0" : 
+			{
+				"condition" : "isgrset.value==true",
+				"fraction" : true,
+				"index" : 9,
+				"max" : 10,
+				"min" : 0,
+				"order" : 109,
+				"precision" : 2,
+				"step" : 0.1,
+				"text" : "外层重力加速度",
+				"type" : "slider",
+				"value" : 1
+			},
+			"g1" : 
+			{
+				"condition" : "isgrset.value==true",
+				"fraction" : true,
+				"index" : 10,
+				"max" : 10,
+				"min" : -10,
+				"order" : 110,
+				"precision" : 2,
+				"step" : 0.1,
+				"text" : "内层重力加速度",
+				"type" : "slider",
+				"value" : -1
+			},
+			"gr" : 
+			{
+				"condition" : "isgrset.value==true",
+				"fraction" : false,
+				"index" : 8,
+				"max" : 1000,
+				"min" : 0,
+				"order" : 108,
+				"text" : "交界线半径",
+				"type" : "slider",
+				"value" : 200
+			},
+			"isgrset" : 
+			{
+				"index" : 6,
+				"order" : 106,
+				"text" : "设置双层重力",
+				"type" : "bool",
+				"value" : false
+			},
+			"n" : 
+			{
+				"fraction" : false,
+				"index" : 5,
+				"max" : 10000,
+				"min" : 1,
+				"order" : 105,
+				"text" : "粒子数量",
+				"type" : "slider",
+				"value" : 5000
+			},
+			"pointcolor" : 
+			{
+				"index" : 0,
+				"order" : 100,
+				"text" : "粒子颜色",
+				"type" : "color",
+				"value" : "1 1 1"
+			},
+			"pointsize" : 
+			{
+				"fraction" : false,
+				"index" : 4,
+				"max" : 10,
+				"min" : 1,
+				"order" : 104,
+				"text" : "粒子大小",
+				"type" : "slider",
+				"value" : 1
+			},
+			"schemecolor" : 
+			{
+				"order" : 0,
+				"text" : "ui_browse_properties_scheme_color",
+				"type" : "color",
+				"value" : "0 0 0"
+			}
+		}
+	},
+	"preview" : "preview.gif",
+	"tags" : [ "Abstract" ],
+	"title" : "重力粒子",
+	"type" : "Web",
+	"version" : 7,
+	"visibility" : "public",
+	"workshopid" : "2609198952",
+	"workshopurl" : "steam://url/CommunityFilePage/2609198952"
+}

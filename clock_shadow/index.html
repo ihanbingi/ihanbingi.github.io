@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clock shadow</title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: #e0e0e0;
+            text-align: center;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            font-family: "Avenir Next", "Helvetica Neue", sans-serif;
+        }
+        #ampm {
+            font-size: 4vh;
+            margin-top: -8vh;
+            text-align: left;
+            color: #e0e0e0;
+            text-shadow: -1px 1px 0 rgba(160, 160, 160, .1), 1px -1px 0 rgba(255, 255, 255, .1), 1px -1px 25px white, -1px 1.9px 1px rgba(160, 160, 160, 2), -2px 3.8px 2px #a0a0a0, -3px 5.7px 3px rgba(160, 160, 160, 0.66666666666667), -4px 7.6px 4px rgba(160, 160, 160, 0.5), -5px 9.5px 5px rgba(160, 160, 160, 0.4), -6px 11.4px 6px rgba(160, 160, 160, 0.33333333333333), -7px 13.3px 7px rgba(160, 160, 160, 0.28571428571429), -8px 15.2px 8px rgba(160, 160, 160, 0.25), -9px 17.1px 9px rgba(160, 160, 160, 0.22222222222222), -10px 19px 10px rgba(160, 160, 160, 0.2), -11px 20.9px 11px rgba(160, 160, 160, 0.18181818181818), -12px 22.8px 12px rgba(160, 160, 160, 0.16666666666667), -13px 24.7px 13px rgba(160, 160, 160, 0.15384615384615), -14px 26.6px 14px rgba(160, 160, 160, 0.14285714285714), -15px 28.5px 15px rgba(160, 160, 160, 0.13333333333333), -16px 30.4px 16px rgba(160, 160, 160, 0.125), -17px 32.3px 17px rgba(160, 160, 160, 0.11764705882353), -18px 34.2px 18px rgba(160, 160, 160, 0.11111111111111), -19px 36.1px 19px rgba(160, 160, 160, 0.10526315789474), -20px 38px 20px rgba(160, 160, 160, 0.1), -21px 39.9px 21px rgba(160, 160, 160, 0.095238095238095), -22px 41.8px 22px rgba(160, 160, 160, 0.090909090909091), -23px 43.7px 23px rgba(160, 160, 160, 0.08695652173913), -24px 45.6px 24px rgba(160, 160, 160, 0.083333333333333), -25px 47.5px 25px rgba(160, 160, 160, 0.08);
+        }
+        #clock {
+            font-size: 15vh;
+            width: 62vh;
+            text-align: left;
+            color: #e0e0e0;
+            text-shadow: -1px 1px 0 rgba(160, 160, 160, .1), 1px -1px 0 rgba(255, 255, 255, .1), 1px -1px 25px white, -1px 1.9px 1px rgba(160, 160, 160, 2), -2px 3.8px 2px #a0a0a0, -3px 5.7px 3px rgba(160, 160, 160, 0.66666666666667), -4px 7.6px 4px rgba(160, 160, 160, 0.5), -5px 9.5px 5px rgba(160, 160, 160, 0.4), -6px 11.4px 6px rgba(160, 160, 160, 0.33333333333333), -7px 13.3px 7px rgba(160, 160, 160, 0.28571428571429), -8px 15.2px 8px rgba(160, 160, 160, 0.25), -9px 17.1px 9px rgba(160, 160, 160, 0.22222222222222), -10px 19px 10px rgba(160, 160, 160, 0.2), -11px 20.9px 11px rgba(160, 160, 160, 0.18181818181818), -12px 22.8px 12px rgba(160, 160, 160, 0.16666666666667), -13px 24.7px 13px rgba(160, 160, 160, 0.15384615384615), -14px 26.6px 14px rgba(160, 160, 160, 0.14285714285714), -15px 28.5px 15px rgba(160, 160, 160, 0.13333333333333), -16px 30.4px 16px rgba(160, 160, 160, 0.125), -17px 32.3px 17px rgba(160, 160, 160, 0.11764705882353), -18px 34.2px 18px rgba(160, 160, 160, 0.11111111111111), -19px 36.1px 19px rgba(160, 160, 160, 0.10526315789474), -20px 38px 20px rgba(160, 160, 160, 0.1), -21px 39.9px 21px rgba(160, 160, 160, 0.095238095238095), -22px 41.8px 22px rgba(160, 160, 160, 0.090909090909091), -23px 43.7px 23px rgba(160, 160, 160, 0.08695652173913), -24px 45.6px 24px rgba(160, 160, 160, 0.083333333333333), -25px 47.5px 25px rgba(160, 160, 160, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <div id="ampm"></div>
+    <div id="clock"></div>
+
+    <script>
+        let use24 = true;
+        let showSec = true;
+        let clockLayer = document.getElementById("clock");
+        let ampmLayer = document.getElementById("ampm");
+
+        window.wallpaperPropertyListener = {
+            applyUserProperties: function(properties) {
+                if (properties.use24hformat) {
+                    use24 = properties.use24hformat.value;
+                } 
+                if (properties.showsec) {
+                    showSec = properties.showsec.value;
+                }
+                if (properties.darkmode) {
+                    let bodyElements = document.getElementsByTagName('body');
+                    let bodyElement = bodyElements[0];
+                    if (properties.darkmode.value) {
+                        bodyElement.style.filter = 'brightness(0.15)';
+                        bodyElement.style.background = '#222222';
+                    } else {
+                        bodyElement.style.filter = '';
+                        bodyElement.style.background = '#e0e0e0';
+                    }
+                }
+            },
+        };
+
+        function updateClock() {
+            var now = new Date();
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+            var seconds = now.getSeconds();
+
+            // 0埋めして二桁表示に
+            hours = hours < 10 ? "0" + hours : hours;
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            var ampm = hours >= 12 ? "PM" : "AM";
+            if (!use24) {
+                hours = (hours % 12 || 12).toString().padStart(2, '0');
+                ampmLayer.textContent = ampm;
+                ampmLayer.style.width = `8vh`;
+            } else {
+                ampmLayer.textContent = '';
+                ampmLayer.style.width = `0vh`;
+            }
+
+            if (showSec) {
+                var timeString = hours + ":" + minutes + ":" + seconds;
+                clockLayer.style.width = `62vh`;
+            } else {
+                var timeString = hours + ":" + minutes;
+                clockLayer.style.width = `41vh`;
+            }
+
+            // 時間を表示する要素にテキストを設定
+            clockLayer.textContent = timeString;
+        }
+
+        function updateShadow(event) {
+            var x = event.clientX / window.innerWidth * 2 - 1;
+            var y = event.clientY / window.innerHeight * 2 - 1;
+            y = -y;
+
+            x = x / 15;
+            y = y / 15;
+
+            clockLayer.style.textShadow =
+                `${-x * 25}px ${y * 25}px 0 rgba(160, 160, 160, .1), 
+                 ${x * 25}px ${-y * 25}px 0 rgba(255, 255, 255, .1), 
+                 ${x * 25}px ${-y * 25}px 25px white, 
+                 ${-x * 25}px ${y * 25 * 1.9}px 1px rgba(160, 160, 160, 2), 
+                 ${-x * 25 * 2}px ${y * 25 * 3.8}px 2px #a0a0a0, 
+                 ${-x * 25 * 3}px ${y * 25 * 5.7}px 3px rgba(160, 160, 160, 0.66666666666667), 
+                 ${-x * 25 * 4}px ${y * 25 * 7.6}px 4px rgba(160, 160, 160, 0.5), 
+                 ${-x * 25 * 5}px ${y * 25 * 9.5}px 5px rgba(160, 160, 160, 0.4), 
+                 ${-x * 25 * 6}px ${y * 25 * 11.4}px 6px rgba(160, 160, 160, 0.33333333333333), 
+                 ${-x * 25 * 7}px ${y * 25 * 13.3}px 7px rgba(160, 160, 160, 0.28571428571429), 
+                 ${-x * 25 * 8}px ${y * 25 * 15.2}px 8px rgba(160, 160, 160, 0.25), 
+                 ${-x * 25 * 9}px ${y * 25 * 17.1}px 9px rgba(160, 160, 160, 0.22222222222222), 
+                 ${-x * 25 * 10}px ${y * 25 * 19}px 10px rgba(160, 160, 160, 0.2), 
+                 ${-x * 25 * 11}px ${y * 25 * 20.9}px 11px rgba(160, 160, 160, 0.18181818181818), 
+                 ${-x * 25 * 12}px ${y * 25 * 22.8}px 12px rgba(160, 160, 160, 0.16666666666667), 
+                 ${-x * 25 * 13}px ${y * 25 * 24.7}px 13px rgba(160, 160, 160, 0.15384615384615), 
+                 ${-x * 25 * 14}px ${y * 25 * 26.6}px 14px rgba(160, 160, 160, 0.14285714285714), 
+                 ${-x * 25 * 15}px ${y * 25 * 28.5}px 15px rgba(160, 160, 160, 0.13333333333333), 
+                 ${-x * 25 * 16}px ${y * 25 * 30.4}px 16px rgba(160, 160, 160, 0.125), 
+                 ${-x * 25 * 17}px ${y * 25 * 32.3}px 17px rgba(160, 160, 160, 0.11764705882353), 
+                 ${-x * 25 * 18}px ${y * 25 * 34.2}px 18px rgba(160, 160, 160, 0.11111111111111), 
+                 ${-x * 25 * 19}px ${y * 25 * 36.1}px 19px rgba(160, 160, 160, 0.10526315789474), 
+                 ${-x * 25 * 20}px ${y * 25 * 38}px 20px rgba(160, 160, 160, 0.1), 
+                 ${-x * 25 * 21}px ${y * 25 * 39.9}px 21px rgba(160, 160, 160, 0.095238095238095), 
+                 ${-x * 25 * 22}px ${y * 25 * 41.8}px 22px rgba(160, 160, 160, 0.090909090909091), 
+                 ${-x * 25 * 23}px ${y * 25 * 43.7}px 23px rgba(160, 160, 160, 0.08695652173913), 
+                 ${-x * 25 * 24}px ${y * 25 * 45.6}px 24px rgba(160, 160, 160, 0.083333333333333), 
+                 ${-x * 25 * 25}px ${y * 25 * 47.5}px 25px rgba(160, 160, 160, 0.08)`;
+
+            ampmLayer.style.textShadow =
+                `${-x * 25}px ${y * 25}px 0 rgba(160, 160, 160, .1), 
+                 ${x * 25}px ${-y * 25}px 0 rgba(255, 255, 255, .1), 
+                 ${x * 25}px ${-y * 25}px 25px white, 
+                 ${-x * 25}px ${y * 25 * 1.9}px 1px rgba(160, 160, 160, 2), 
+                 ${-x * 25 * 2}px ${y * 25 * 3.8}px 2px #a0a0a0, 
+                 ${-x * 25 * 3}px ${y * 25 * 5.7}px 3px rgba(160, 160, 160, 0.66666666666667), 
+                 ${-x * 25 * 4}px ${y * 25 * 7.6}px 4px rgba(160, 160, 160, 0.5), 
+                 ${-x * 25 * 5}px ${y * 25 * 9.5}px 5px rgba(160, 160, 160, 0.4), 
+                 ${-x * 25 * 6}px ${y * 25 * 11.4}px 6px rgba(160, 160, 160, 0.33333333333333), 
+                 ${-x * 25 * 7}px ${y * 25 * 13.3}px 7px rgba(160, 160, 160, 0.28571428571429), 
+                 ${-x * 25 * 8}px ${y * 25 * 15.2}px 8px rgba(160, 160, 160, 0.25), 
+                 ${-x * 25 * 9}px ${y * 25 * 17.1}px 9px rgba(160, 160, 160, 0.22222222222222), 
+                 ${-x * 25 * 10}px ${y * 25 * 19}px 10px rgba(160, 160, 160, 0.2), 
+                 ${-x * 25 * 11}px ${y * 25 * 20.9}px 11px rgba(160, 160, 160, 0.18181818181818), 
+                 ${-x * 25 * 12}px ${y * 25 * 22.8}px 12px rgba(160, 160, 160, 0.16666666666667), 
+                 ${-x * 25 * 13}px ${y * 25 * 24.7}px 13px rgba(160, 160, 160, 0.15384615384615), 
+                 ${-x * 25 * 14}px ${y * 25 * 26.6}px 14px rgba(160, 160, 160, 0.14285714285714), 
+                 ${-x * 25 * 15}px ${y * 25 * 28.5}px 15px rgba(160, 160, 160, 0.13333333333333), 
+                 ${-x * 25 * 16}px ${y * 25 * 30.4}px 16px rgba(160, 160, 160, 0.125), 
+                 ${-x * 25 * 17}px ${y * 25 * 32.3}px 17px rgba(160, 160, 160, 0.11764705882353), 
+                 ${-x * 25 * 18}px ${y * 25 * 34.2}px 18px rgba(160, 160, 160, 0.11111111111111), 
+                 ${-x * 25 * 19}px ${y * 25 * 36.1}px 19px rgba(160, 160, 160, 0.10526315789474), 
+                 ${-x * 25 * 20}px ${y * 25 * 38}px 20px rgba(160, 160, 160, 0.1), 
+                 ${-x * 25 * 21}px ${y * 25 * 39.9}px 21px rgba(160, 160, 160, 0.095238095238095), 
+                 ${-x * 25 * 22}px ${y * 25 * 41.8}px 22px rgba(160, 160, 160, 0.090909090909091), 
+                 ${-x * 25 * 23}px ${y * 25 * 43.7}px 23px rgba(160, 160, 160, 0.08695652173913), 
+                 ${-x * 25 * 24}px ${y * 25 * 45.6}px 24px rgba(160, 160, 160, 0.083333333333333), 
+                 ${-x * 25 * 25}px ${y * 25 * 47.5}px 25px rgba(160, 160, 160, 0.08)`;
+        }
+
+        // 初回実行
+        updateClock();
+
+        // 1秒ごとに時間を更新
+        setInterval(updateClock, 1000);
+
+        // カーソルの位置に応じて影の向きを変更
+        document.addEventListener("mousemove", updateShadow);
+    </script>
+</body>
+</html>

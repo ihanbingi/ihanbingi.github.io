@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Flight</title>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+  <script type="text/javascript" src="starry.js"></script>
+  <!-- <script src="./p5.js"></script> -->
+  <!-- <script src="../addons/p5.sound.js"></script> -->
+  <script src="./sketch.js"></script>
+</head>
+
+<body>
+  <span data-credit="Federico Dossena https://fdossena.com/?p=warpspeed/i.frag"></span>
+  <canvas id="canvas" style="position:fixed; top:0; left:0; width:100%; height:100%;"></canvas>
+  <script>
+    let config = {
+      speed: .4,
+      targetSpeed: 0.7,
+      density: 15,
+      starColor: "rgb(224, 255, 255)",
+      depth: 1000,
+      warpEffect: true,
+      warpEffectLength: 10,
+      starSize: 3,
+      shape: true,
+      depthFade: true,
+      backgroundColor: "rgb(0, 0, 16)",
+
+      speedAdjFactor: 0.05,
+    }
+
+    let show = new WarpSpeed("canvas", config)
+
+    // show.update()
+
+    let depthpct
+
+    window.wallpaperPropertyListener = {
+      applyUserProperties: function (properties) {
+        if (properties.starsize) {
+          let old = config.starSize
+          config.starSize = properties.starsize.value * 1.2;
+          console.log(`set starSize`, old, " > ", config.starSize)
+        }
+        if (properties.speed) {
+          let old = config.speed
+          config.speed = properties.speed.value;
+          console.log(`set speed`, old, " > ", config.speed)
+        }
+        if (properties.topspeed) {
+          let old = config.targetSpeed
+          config.targetSpeed = (properties.topspeed.value * 1.2) * depthpct;
+          console.log(`set topspeed`, old, " > ", config.targetSpeed)
+        }
+        if (properties.warptrails) {
+          let old = config.warpEffect
+          config.warpEffect = properties.warptrails.value;
+          console.log(`set warptrails`, old, " > ", config.warpEffect)
+        }
+        if (properties.traillength) {
+          let old = config.warpEffectLength
+          config.warpEffectLength = properties.traillength.value / 5;
+          console.log(`set traillength`, old, " > ", config.warpEffectLength)
+        }
+        if (properties.rounded) {
+          let old = config.shape
+          config.shape = properties.rounded.value;
+          console.log(`set rounded`, old, " > ", config.shape)
+        }
+        if (properties.fade) {
+          let old = config.depthFade
+          config.depthFade = properties.fade.value;
+          console.log(`set fade`, old, " > ", config.shape)
+        }
+
+        if (properties.color) {
+          let old = config.starColor
+          let customColor = properties.color.value.split(' ');
+          customColor = customColor.map(function (c) {
+            return Math.ceil(c * 255);
+          });
+          config.starColor = 'rgb(' + customColor + ')'
+          // config.starColor = properties.color.value
+          console.log(`set starColor`, old, " > ", config.starColor)
+        }
+        if (properties.background) {
+          let old = config.backgroundColor
+          let customColor = properties.background.value.split(' ');
+          customColor = customColor.map(function (c) {
+            return Math.ceil(c * 255);
+          });
+          config.backgroundColor = 'rgb(' + customColor + ')'
+          // config.starColor = properties.color.value
+          console.log(`set starColor`, old, " > ", config.backgroundColor)
+        }
+
+        show.update(config)
+
+        if (properties.depth) {
+          let old = config.depth
+          let oldts = config.targetSpeed
+          config.depth = properties.depth.value * 20;
+          depthpct = config.depth / 2000
+
+          config.targetSpeed = properties.topspeed.value * depthpct
+          console.log(`set depth `, old, " > ", config.depth)
+          console.log(`set targetSpeed `, oldts, " > ", config.targetSpeed)
+          show = new WarpSpeed("canvas", config)
+        }
+        if (properties.density) {
+          let old = config.density
+          config.density = properties.density.value * 2.5;
+          console.log(`set density`, old, " > ", config.density)
+          show = new WarpSpeed("canvas", config)
+        }
+
+      },
+    };
+  </script>
+</body>
+
+</html>

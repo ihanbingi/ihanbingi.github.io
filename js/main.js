@@ -313,7 +313,7 @@ $("#bilibili")
   });
 $("#telegram")
   .mouseover(function () {
-    $("#link-text").html("我的其他账号");
+    $("#link-text").html("来看看吗?");
   })
   .mouseout(function () {
     $("#link-text").html("通过这里联系我");
@@ -325,12 +325,12 @@ $("#switchmore").on("click", function () {
   shoemore = !shoemore;
   if (shoemore && $(document).width() >= 990) {
     $("#container").attr("class", "container mores");
-    $("#change").html("time as water...");
-    $("#change1").html("时间流逝如水...");
+    $("#change").html("Oops&nbsp;!");
+    $("#change1").html("哎呀，这都被你发现了（ 再点击一次可关闭 ）");
   } else {
     $("#container").attr("class", "container");
-    $("#change").html("lit a light in starry sky");
-    $("#change1").html("在星空中点燃一束光");
+    $("#change").html("Hello&nbsp;!");
+    $("#change1").html("嘿！");
   }
 });
 

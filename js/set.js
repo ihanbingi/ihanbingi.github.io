@@ -31,7 +31,7 @@ let bg_img_preinstall = {
   type: "1", // 1:默认背景 2:每日一图 3:随机风景 4:随机动漫
   2: "https://api.dujin.org/bing/1920.php", // 每日一图
   3: "https://api.btstu.cn/sjbz/api.php?lx=fengjing&format=images", // 随机风景
-  4: "https://www.dmoe.cc/random.php", // 随机动漫
+  4: "https://t.mwm.moe/ycy", // 随机动漫
 };
 
 // 更改背景图片

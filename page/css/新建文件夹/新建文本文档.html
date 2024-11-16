@@ -1,0 +1,20 @@
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+<!--什么文件链接都不要加-->
+</head>
+<body>
+<img src="https://loading.io/spinners/rolling/index.curve-bars-loading-indicator.svg" />
+<!--这里加<script /><link /><style />等内容-->
+<div style="display:none">页面body的内容</div>
+<script type="text/javascript">
+//假设3秒加载完整个页面
+window.setTimeout(function()
+{
+	window.document.body.removeChild(window.document.body.children[0]);
+	window.document.body.children[0].style.display="";
+},3000);
+</script>
+</body>
+</html>

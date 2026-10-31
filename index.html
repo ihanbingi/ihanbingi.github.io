@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>黄昏 · 教室 · 樱</title>
+
+  <!-- 音乐播放器库 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+
+  <style>
+
+    body { margin:0; overflow:hidden; font-family:"Microsoft YaHei","PingFang SC",sans-serif; touch-action:none; background:#2c1e3f; }
+    #gameWrap { position:fixed; left:0; top:0; width:100%; height:100%; transform-origin:center center; background:#2c1e3f; }
+    #gameWrap.rotated { left:50%; top:50%; width:100vh; height:100vw; margin-left:-50vh; margin-top:-50vw; transform:rotate(90deg); }
+    #gameWrap.rotated.invert-180 { transform:rotate(90deg) rotate(180deg); }
+    #gameWrap.invert-180 { transform:rotate(180deg); }
+    #gameWrap canvas { position:absolute; left:0; top:0; display:block; }
+#overlay { position:absolute; inset:0; background:transparent; color:#ffe6c4; display:flex; flex-direction:column; justify-content:center; align-items:center; cursor:pointer; z-index:10; text-align:center; text-shadow:0 2px 12px rgba(0,0,0,.9); user-select:none; pointer-events:auto; }
+    #overlay h1 { font-weight:300; letter-spacing:12px; font-size:38px; margin-bottom:10px; }
+    #overlay p { opacity:.85; font-size:15px; letter-spacing:2px; }
+    #overlay .btn { display:inline-block; margin-top:14px; padding:10px 28px; border:1px solid rgba(255,220,180,.6); border-radius:40px; color:#ffe0c0; background:rgba(255,180,120,.15); backdrop-filter:blur(6px); letter-spacing:4px; cursor:pointer; }
+    #touchControls { display:none; position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:20; }
+    #touchControls .stick-area { position:absolute; width:50%; height:100%; pointer-events:auto; }
+    #moveArea { left:0; }
+    #lookArea { right:0; }
+    #moveStick,#lookStick { position:absolute; width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.25); border:1px solid rgba(255,255,255,.5); box-sizing:border-box; display:none; transform:translate(-50%,-50%); backdrop-filter:blur(4px); }
+    #moveStick::before,#lookStick::before { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.7); }
+    .rotate-toggle { position:fixed; top:14px; right:14px; z-index:30; width:38px; height:38px; background:rgba(0,0,0,.45); color:#ffdba4; border:1px solid rgba(255,220,180,.35); border-radius:50%; backdrop-filter:blur(4px); pointer-events:auto; cursor:pointer; font-size:17px; line-height:38px; text-align:center; user-select:none; }
+    #rotateHintGame { display:none; }
+    #gameplayHint { display:none; position:fixed; left:50%; bottom:18%; transform:translateX(-50%); background:rgba(0,0,0,.75); color:#ffe0c0; padding:16px 24px; border-radius:12px; font-size:14px; text-align:center; line-height:1.8; backdrop-filter:blur(6px); border:1px solid rgba(255,220,180,.3); box-shadow:0 4px 20px rgba(0,0,0,.5); z-index:25; pointer-events:none; max-width:90%; }
+    #paperPrompt { position:fixed; left:50%; bottom:30%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,.65); padding:8px 18px; border-radius:20px; font-size:15px; letter-spacing:2px; z-index:50; pointer-events:none; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.3); display:none; }
+    #paperViewOverlay { position:fixed; inset:0; background:rgba(40,40,40,.85); display:none; justify-content:center; align-items:center; flex-direction:column; z-index:100; backdrop-filter:blur(6px); }
+    .paper-card { background:#fff; width:280px; height:280px; border-radius:4px; box-shadow:0 0 40px rgba(255,255,255,.4); display:flex; justify-content:center; align-items:center; font-size:44px; font-family:"KaiTi","STKaiti","SimSun",serif; color:#222; text-align:center; padding:20px; box-sizing:border-box; }
+    #paperViewOverlay p { color:rgba(255,255,255,.8); margin-top:20px; font-size:14px; letter-spacing:2px; }
+    .view-close { position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:50%; background:#b03a3a; color:#fff; border:none; cursor:pointer; font-size:16px; line-height:34px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.4); z-index:10; }
+    #sitPrompt { position:fixed; left:50%; bottom:22%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,.65); padding:8px 18px; border-radius:20px; font-size:15px; letter-spacing:2px; z-index:50; pointer-events:none; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.3); display:none; }
+
+    /* 统一电脑端互动提示条：池核返回提示改成教室同款黑色半透明 */
+    #poolGatePrompt { position:fixed; left:50%; bottom:30%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,.65); padding:8px 18px; border-radius:20px; font-size:15px; letter-spacing:2px; z-index:50; pointer-events:none; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.3); display:none; }
+
+    #notebookViewOverlay { position:fixed; inset:0; background:rgba(30,20,40,.88); display:none; justify-content:center; align-items:center; flex-direction:column; z-index:100; backdrop-filter:blur(8px); }
+    .notebook { width:min(430px,92vw); background:linear-gradient(150deg,#fcf4e6,#efe2cb); border-radius:6px 20px 20px 6px; box-shadow:0 24px 70px rgba(0,0,0,.55), inset 0 0 0 1px rgba(180,150,110,.45); padding:36px 34px 30px; position:relative; transform:rotate(-1.5deg); }
+    .notebook::before { content:''; position:absolute; left:24px; top:0; bottom:0; width:2px; background:rgba(200,110,110,.5); }
+    .notebook::after { content:''; position:absolute; left:0; top:0; bottom:0; width:14px; background:linear-gradient(90deg,rgba(160,120,80,.35),rgba(160,120,80,.08)); border-radius:6px 0 0 6px; }
+    .notebook .nb-title { font-family:"KaiTi","STKaiti","SimSun",serif; font-size:26px; color:#4a3320; text-align:center; letter-spacing:8px; margin-bottom:18px; }
+    .notebook .nb-content { font-family:"KaiTi","STKaiti","SimSun",serif; font-size:17px; line-height:2.1; color:#5a4430; padding-left:20px; }
+    .notebook .nb-content p { margin:0 0 10px; }
+    .notebook .nb-line { border-bottom:1px dashed rgba(120,100,70,.4); margin:14px 0 12px 20px; }
+    .notebook .nb-close { position:absolute; top:-12px; right:-12px; width:32px; height:32px; border-radius:50%; background:#b03a3a; color:#fff; border:none; cursor:pointer; font-size:16px; line-height:32px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.4); }
+    #notebookViewOverlay > p { color:rgba(255,255,255,.7); margin-top:18px; font-size:13px; letter-spacing:2px; }
+    /* 光之电梯 */
+    /* 电梯互动提示条改成教室同款 */
+    #elevatorPrompt { position:fixed; left:50%; bottom:30%; transform:translateX(-50%); color:#fff; background:rgba(0,0,0,.65); padding:8px 18px; border-radius:20px; font-size:15px; letter-spacing:2px; z-index:50; pointer-events:none; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.3); display:none; }
+
+    #elevatorViewOverlay { position:fixed; inset:0; background:rgba(8,26,40,.88); display:none; justify-content:center; align-items:center; flex-direction:column; z-index:100; backdrop-filter:blur(8px); }
+    .elevator-panel { width:min(430px,92vw); background:linear-gradient(160deg,#0e3a4e,#16495f); border:1px solid rgba(140,230,255,.4); border-radius:16px; padding:26px 24px; box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 40px rgba(120,220,255,.15); position:relative; }
+    /* 电梯关闭键下移（面板内右上角） */
+    .elevator-panel .nb-close { top:10px; right:10px; }
+
+    .el-title { font-family:"KaiTi","STKaiti","SimSun",serif; font-size:24px; color:#d8f4ff; text-align:center; letter-spacing:8px; margin-bottom:16px; }
+    .el-floors { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; max-height:46vh; overflow-y:auto; }
+    .el-floor-btn { background:rgba(120,200,230,.12); border:1px solid rgba(140,230,255,.35); color:#d8f4ff; border-radius:10px; padding:10px 6px; font-size:14px; letter-spacing:2px; cursor:pointer; font-family:inherit; }
+    .el-floor-btn:hover { background:rgba(140,230,255,.28); }
+    .el-floor-btn.el-current { background:rgba(255,220,120,.22); border-color:rgba(255,220,120,.6); color:#ffe9b0; }
+    .el-hint { color:rgba(200,235,255,.7); font-size:13px; text-align:center; margin-top:14px; letter-spacing:1px; }
+    #elevatorViewOverlay > p { color:rgba(255,255,255,.6); margin-top:16px; font-size:13px; letter-spacing:2px; }
+    /* 手机通用互动按钮（黑色系） */
+    #elevatorMobileBtn { display:none; position:fixed; left:50%; bottom:13%; transform:translateX(-50%); z-index:60; padding:12px 26px; border-radius:40px; background:rgba(0,0,0,.7); color:#e8e8e8; border:1px solid rgba(255,255,255,.35); font-size:16px; letter-spacing:4px; pointer-events:auto; cursor:pointer; backdrop-filter:blur(6px); box-shadow:0 4px 20px rgba(0,0,0,.5); }
+
+    /* 音乐播放器：放在 #gameWrap 内，跟随游戏旋转，在画面左上角 */
+    meting-js { position: absolute; top: 12px; left: 12px; z-index: 9999; }
+    meting-js .aplayer { margin: 0; }
+    #aplayer-meting, .aplayer, .aplayer-fixed { z-index: 9999; }
+
+    /* 手机端笔记本优化 */
+    @media (max-width: 900px) {
+      #notebookViewOverlay { justify-content:center; }
+      .notebook { width:min(340px,88vw); padding:28px 26px 22px; }
+      .notebook .nb-title { font-size:24px; margin-bottom:14px; }
+      .notebook .nb-content { font-size:16px; line-height:2.0; padding-left:16px; }
+      .notebook .nb-line { margin:12px 0 12px 16px; }
+      .notebook .nb-close { top:10px; right:10px; width:32px; height:32px; line-height:32px; font-size:16px; }
+      #notebookViewOverlay > p { font-size:13px; margin-top:14px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="gameWrap">
+    <!-- 开始提示 -->
+    <div id="overlay">
+      <p style="font-size:40px; font-weight:700; letter-spacing:8px; color:#ffe6c4; text-shadow:0 0 14px rgba(255,210,160,.95), 0 0 30px rgba(255,180,120,.6), 0 3px 8px rgba(0,0,0,.9);">点击移动视角</p>
+      <p style="font-size:16px; font-weight:400; letter-spacing:3px; color:#ffe6c4; opacity:.85; text-shadow:0 0 10px rgba(255,210,160,.8), 0 2px 6px rgba(0,0,0,.8); margin-top:12px;">click to look around</p>
+    </div>
+
+    <div id="touchControls">
+      <div class="stick-area" id="moveArea"><div id="moveStick"></div></div>
+      <div class="stick-area" id="lookArea"><div id="lookStick"></div></div>
+    </div>
+
+    <div class="rotate-toggle" id="rotateHintGame">🔄</div>
+
+    <div id="gameplayHint">
+      <p>🎮 操作方式</p>
+      <p>移动：WASD / 手机左侧摇杆</p>
+      <p>视角：鼠标拖动 / 手机右侧滑动</p>
+      <p>查看/坐下：手机点击底部按钮，电脑按 F</p>
+      <p style="color:#9fd8ff;">按住 Alt 显示鼠标指针（可点音乐播放器），松开隐藏</p>
+    </div>
+
+    <div id="paperPrompt">F 查看</div>
+    <div id="paperViewOverlay">
+      <button class="view-close" id="paperClose">×</button>
+      <div class="paper-card" id="paperCard">寒冰</div>
+      <p>再按 F 或点击 × 关闭</p>
+    </div>
+
+    <div id="sitPrompt">F 坐下</div>
+    <div id="poolGatePrompt">F 返回</div>
+    <div id="elevatorPrompt">F 选择楼层</div>
+    <button id="elevatorMobileBtn">交互</button>
+
+    <div id="notebookViewOverlay">
+      <div class="notebook">
+        <button class="nb-close" id="notebookClose">×</button>
+        <div class="nb-title">寒冰的笔记本</div>
+        <div class="nb-content" id="notebookContent">
+          <p>欢迎来到我的网站 ✧</p>
+          <p>这是我设计搭建的一个 3D 虚拟空间。</p>
+          <p>穿过走廊尽头的那道光，会进入「池核」世界。</p>
+          <p>池核共有 10 层，每一层都有 16 个按钮，点击即可前往对应网址。</p>
+          <div class="nb-line"></div>
+          <p style="opacity:.6;font-size:14px;">—— 寒冰 · 手记</p>
+        </div>
+      </div>
+      <p>再按 F 或点击 × 关闭</p>
+    </div>
+
+    <div id="elevatorViewOverlay">
+      <div class="elevator-panel">
+        <button class="nb-close" id="elevatorClose">×</button>
+        <div class="el-title">光之电梯</div>
+        <div class="el-floors" id="elevatorFloors"></div>
+        <p class="el-hint">当前楼层：<span id="elevatorCurrent">1</span> 层 · 点击任意楼层前往</p>
+      </div>
+      <p>再按 F 或点击 × 关闭</p>
+    </div>
+
+    <!-- 音乐播放器（放在 #gameWrap 内部，跟随旋转） -->
+    <meting-js
+      server="netease"
+      type="playlist"
+      autoplay="true"
+      mini="true"
+      id="13697316223">
+    </meting-js>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // ===== 基础 =====
+    const gameWrap = document.getElementById('gameWrap');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x2c1e3f);
+    scene.fog = new THREE.Fog(0xffac9a, 5, 24);
+    const poolScene = new THREE.Scene();
+    poolScene.background = new THREE.Color(0x1a6a8a);
+    poolScene.fog = new THREE.Fog(0x1a6a8a, 15, 180);
+    let currentScene = scene;
+    const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.1, 100);
+    camera.rotation.order = 'YXZ';
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    gameWrap.appendChild(renderer.domElement);
+
+    // ===== 灯光 =====
+    const hemiLight = new THREE.HemisphereLight(0xffcfb0, 0x5a4a6a, 1.1);
+    scene.add(hemiLight);
+    const sunLight = new THREE.DirectionalLight(0xffa57a, 1.4);
+    sunLight.position.set(-8, 6, 4);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    sunLight.shadow.camera.left = -14; sunLight.shadow.camera.right = 14;
+    sunLight.shadow.camera.top = 14; sunLight.shadow.camera.bottom = -14;
+    sunLight.shadow.camera.far = 30;
+    scene.add(sunLight); scene.add(sunLight.target);
+    const corridorGlow = new THREE.PointLight(0xff9f80, 1.0, 30); corridorGlow.position.set(18, 3, 0); scene.add(corridorGlow);
+    const pinkGlow = new THREE.PointLight(0xffaabb, 0.6, 20); pinkGlow.position.set(0, 2.5, -2); scene.add(pinkGlow);
+
+    // ===== 全局状态 =====
+    const obstacles = [];
+    const poolObstacles = [];
+    const keys = {};
+    let standing = false, canMove = false, standProgress = 0;
+    let pointerLocked = false, touchActive = false;
+    let yawAngle = 0, pitchAngle = -0.35, bobPhase = 0;
+    const SIT_Y = 1.22, STAND_Y = 1.68, SIT_Z = 0.45;
+    const isMobile = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (('ontouchstart' in window) && window.innerWidth < 900);
+    let moveStick = document.getElementById('moveStick');
+    let lookStick = document.getElementById('lookStick');
+    let lookSensitivity = 0.005;
+    const TOTAL_FLOORS = 10;
+    const FLOOR_Y = Array.from({ length: TOTAL_FLOORS }, (_, i) => 1.2 + i * 3);
+    const POOL_EYE = 0.5;
+
+    // 电梯参数
+    const ELEVATOR_RADIUS = 3.5;
+    const ELEVATOR_SPEED = 2.6;
+    const ELEVATOR_CALL_RADIUS = ELEVATOR_RADIUS + 1.2;
+    let elevatorState = {
+      y: FLOOR_Y[0], floor: 0, targetFloor: null,
+      moving: false, ready: false, riding: false,
+      group: null, rim: null, topRing: null
+    };
+    let elevatorMenuOpen = false;
+    let poolInStairs = false;
+    let poolEntryPos = null;
+    let poolGateReady = false;
+    let jumping = false, yVel = 0;
+    let waterMesh = null;
+    let isViewingPaper = false;
+    let isNearChair = false;
+    const chairPositions = [
+      { x: 0, z: 0.4 }, { x: -3, z: -1.3 }, { x: -1.5, z: -1.3 }, { x: 1.5, z: -1.3 }, { x: 3, z: -1.3 },
+      { x: -3, z: 2.7 }, { x: -1.5, z: 2.7 }, { x: 1.5, z: 2.7 }, { x: 3, z: 2.7 }
+    ];
+    let isSitting = false;
+    let sitAnim = 0;
+    let sitFromPos = null;
+    let sitToPos = null;
+    let poolButtons = [];
+
+    // 手机通用交互按钮状态
+    let mobileAction = 'none';
+
+    // 各层主题与按钮
+    const floorData = [
+      { theme: '作品', buttons: [
+        { label: '点我', name: '我的网站', url: 'https://ihanbingi.github.io/' },
+        { label: '点我', name: '我的网站2', url: 'https://hanbing.cc.cd/' },
+        { label: '点我', name: '我做的一些东西', url: 'https://hanbingi.github.io/download/' },
+        { label: '点我', name: '我的相册', url: 'https://hanbingi.github.io/photos/' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' }
+      ]},
+      { theme: '游戏', buttons: [
+        { label: '点我', name: '我的世界', url: 'https://ihanbingi.github.io/minecraft/' },
+        { label: '点我', name: '我的世界2D', url: 'https://ihanbingi.github.io/minecraft_2d' },
+        { label: '点我', name: 'WebMc', url: 'https://ihanbingi.github.io/webmc/' },
+        { label: '点我', name: '猫里奥', url: 'https://ihanbingi.github.io/catmario/' },
+        { label: '点我', name: '魔塔', url: 'https://ihanbingi.github.io/magictower/' },
+        { label: '点我', name: '小黑屋', url: 'https://ihanbingi.github.io/game2/' },
+        { label: '点我', name: '反物质维度', url: 'https://ihanbingi.github.io/AntimatterDimensions/' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' }
+      ]},
+          { theme: '玩的', buttons: [
+        { label: '点我', name: 'ikun小玩具', url: 'https://ihanbingi.github.io/ikun/' },
+        { label: '点我', name: '长的狗', url: 'https://ihanbingi.github.io/long_doge/' },
+        { label: '点我', name: 'vsbm', url: 'https://ihanbingi.github.io/vsbm/' },
+        { label: '点我', name: 'screenshot_by_lightshot', url: 'https://ihanbingi.github.io/screenshot_by_lightshot/' },
+        { label: '点我', name: 'v50', url: 'https://ihanbingi.github.io/v50/' },
+        { label: '点我', name: 'r18', url: 'https://ihanbingi.github.io/r18/' },
+        { label: '点我', name: 'win12', url: 'https://ihanbingi.github.io/win12/' },
+        { label: '点我', name: 'r18+', url: 'https://ihanbingi.github.io/r18+' },
+        { label: '点我', name: '互联网的尽头', url: 'https://ihanbingi.github.io/Internet_in_the_end/' },
+        { label: '点我', name: 'pornhub', url: 'https://ihanbingi.github.io/pornhub/' },
+        { label: '点我', name: '开学问卷调查', url: 'https://ihanbingi.github.io/kaixue' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' }
+      ]},
+        { theme: '观赏', buttons: [
+        { label: '点我', name: '星空', url: 'https://ihanbingi.github.io/stars2/' },
+        { label: '点我', name: '下雨', url: 'https://ihanbingi.github.io/rain/' },
+        { label: '点我', name: '星辰宇宙', url: 'https://ihanbingi.github.io/stars/' },
+        { label: '点我', name: '流星雨', url: 'https://ihanbingi.github.io/meteors/' },
+        { label: '点我', name: '黑洞', url: 'https://ihanbingi.github.io/block_hole/' },
+        { label: '点我', name: '星星粒子', url: 'https://ihanbingi.github.io/stars3/' },
+        { label: '点我', name: '粒子', url: 'https://ihanbingi.github.io/particles2/' },
+        { label: '点我', name: '烟花', url: 'https://ihanbingi.github.io/fireworks/' },
+        { label: '点我', name: '烟花2', url: 'https://ihanbingi.github.io/fireworks2' },
+        { label: '点我', name: '重力粒子', url: 'https://ihanbingi.github.io/particles' },
+        { label: '点我', name: '七彩泡泡', url: 'https://ihanbingi.github.io/paopao/' },
+        { label: '点我', name: '星空立方体', url: 'https://ihanbingi.github.io/starry_cube/' },
+        { label: '点我', name: '星空中', url: 'https://ihanbingi.github.io/star_filght/' },
+        { label: '点我', name: '光影时钟', url: 'https://ihanbingi.github.io/clock_shadow/' },
+        { label: '点我', name: '便利贴', url: 'https://ihanbingi.github.io/notes/' },
+        { label: '点我', name: '元素周期表', url: 'https://ihanbingi.github.io/yuansu' }
+      ]},
+           { theme: '一些小玩意', buttons: [
+        { label: '点我', name: '可拖拽分开', url: 'https://ihanbingi.github.io/block/' },
+        { label: '点我', name: '白天黑夜切换按钮', url: 'https://ihanbingi.github.io/dayandnightbutton/' },
+        { label: '点我', name: '日历', url: 'https://ihanbingi.github.io/calendar/' },
+        { label: '点我', name: '日出日落', url: 'https://ihanbingi.github.io/sunandmoon/' },
+        { label: '点我', name: '计算器', url: 'https://ihanbingi.github.io/calculator/' },
+        { label: '点我', name: '音乐播放器', url: 'https://ihanbingi.github.io/music/' },
+        { label: '点我', name: '蜘蛛', url: 'https://ihanbingi.github.io/spider/' },
+        { label: '点我', name: '2024倒计时', url: 'https://ihanbingi.github.io/countdown/' },
+        { label: '点我', name: '2024新年快乐', url: 'https://ihanbingi.github.io/happy2024/' },
+        { label: '点我', name: '坤坤', url: 'https://ihanbingi.github.io/kunkun/' },
+        { label: '点我', name: '我的世界时间变化', url: 'https://ihanbingi.github.io/times/' },
+        { label: '点我', name: '中考倒计时', url: 'https://ihanbingi.github.io/mid-term-countdown/' },
+        { label: '点我', name: 'emoji', url: 'https://ihanbingi.github.io/emoji/' },
+        { label: '点我', name: '遥感飞船', url: 'https://ihanbingi.github.io/move_flyboat' },
+        { label: '点我', name: '便利贴', url: 'https://ihanbingi.github.io/draw' },
+        { label: '点我', name: '画图', url: 'https://ihanbingi.github.io/draw2/' }
+      ]},
+         { theme: '被遗落的', buttons: [
+        { label: '点我', name: '光暗时钟', url: 'https://ihanbingi.github.io/day_and_night_clock/' },
+        { label: '点我', name: '画图板', url: 'https://ihanbingi.github.io/draw/' },
+        { label: '点我', name: 'html文本输入', url: 'https://ihanbingi.github.io/html_text/' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' },
+        { label: '空', name: '空', url: '' }
+      ]},
+
+      { theme: '空', buttons: Array.from({ length: 16 }, (_, i) => ({ label: '空' , name: '空' , url: ''  })) },
+      { theme: '空', buttons: Array.from({ length: 16 }, (_, i) => ({ label: '空' , name: '空' , url: '' })) },
+      { theme: '空', buttons: Array.from({ length: 16 }, (_, i) => ({ label: '空' , name: '空' , url: ''  })) },
+      { theme: '空', buttons: Array.from({ length: 16 }, (_, i) => ({ label: '空' , name: '空' , url: ''  })) }
+    ];
+
+    // ===== 工具函数 =====
+    function addBox(x, y, z, w, h, d, mat) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true; scene.add(mesh); return mesh;
+    }
+    function addBoxObstacle(x, y, z, w, h, d, mat) {
+      addBox(x, y, z, w, h, d, mat);
+      obstacles.push({ minX: x - w/2, maxX: x + w/2, minZ: z - d/2, maxZ: z + d/2 });
+    }
+    function addInvisibleObstacle(x, y, z, w, h, d) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+      mesh.visible = false; mesh.position.set(x, y, z); scene.add(mesh);
+      obstacles.push({ minX: x - w/2, maxX: x + w/2, minZ: z - d/2, maxZ: z + d/2 });
+    }
+    function collide(pos) {
+      const r = 0.3;
+      for (const box of obstacles) {
+        const cx = Math.max(box.minX, Math.min(pos.x, box.maxX));
+        const cz = Math.max(box.minZ, Math.min(pos.z, box.maxZ));
+        const dx = pos.x - cx, dz = pos.z - cz;
+        if (dx * dx + dz * dz < r * r) {
+          const left = pos.x - (box.minX - r), right = (box.maxX + r) - pos.x;
+          const front = pos.z - (box.minZ - r), back = (box.maxZ + r) - pos.z;
+          const min = Math.min(left, right, front, back);
+          if (min === left) pos.x = box.minX - r;
+          else if (min === right) pos.x = box.maxX + r;
+          else if (min === front) pos.z = box.minZ - r;
+          else pos.z = box.maxZ + r;
+        }
+      }
+      return pos;
+    }
+    function collide3D(list, pos) {
+      const r = 0.3;
+      for (const box of list) {
+        if (pos.y < box.minY - r || pos.y > box.maxY + r) continue;
+        const cx = Math.max(box.minX, Math.min(pos.x, box.maxX));
+        const cz = Math.max(box.minZ, Math.min(pos.z, box.maxZ));
+        const dx = pos.x - cx, dz = pos.z - cz;
+        if (dx * dx + dz * dz < r * r) {
+          const left = pos.x - (box.minX - r), right = (box.maxX + r) - pos.x;
+          const front = pos.z - (box.minZ - r), back = (box.maxZ + r) - pos.z;
+          const min = Math.min(left, right, front, back);
+          if (min === left) pos.x = box.minX - r;
+          else if (min === right) pos.x = box.maxX + r;
+          else if (min === front) pos.z = box.minZ - r;
+          else pos.z = box.maxZ + r;
+        }
+      }
+      return pos;
+    }
+
+    // ===== 材质 =====
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xd9cfc0, roughness: 0.9 });
+    const plasterMat = new THREE.MeshStandardMaterial({ color: 0xf5efe6, roughness: 0.9 });
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b6e4a, roughness: 0.7 });
+    const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x4a3b2a, roughness: 0.8 });
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x4d7a4d, roughness: 0.8 });
+    const oldLeafMat = new THREE.MeshStandardMaterial({ color: 0x6d5a3a, roughness: 0.9, side: THREE.DoubleSide });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0xffe8d0, transparent: true, opacity: 0.2, roughness: 0.15, side: THREE.DoubleSide, depthWrite: false });
+
+    function createChalkboardTexture(text) {
+      const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 280;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#24443c'; ctx.fillRect(0, 0, 1024, 280);
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      for (let i = 0; i < 2000; i++) ctx.fillRect(Math.random()*1024, Math.random()*280, 1, 1);
+      ctx.font = 'bold 80px "KaiTi","STKaiti","SimSun",serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2;
+      for (let i = 0; i < 10; i++) { ctx.globalAlpha = 0.1 + Math.random()*0.2; ctx.fillText(text, 512 + (Math.random()-0.5)*1.8, 140 + (Math.random()-0.5)*1.8); }
+      ctx.globalAlpha = 0.85; ctx.fillText(text, 512, 140); ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; for (let i = 0; i < 800; i++) ctx.fillRect(512 + (Math.random()-0.5)*600, 140 + (Math.random()-0.5)*200, 1, 1);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function makeWoodTexture() {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#8a6b50'; ctx.fillRect(0, 0, 512, 512);
+      ctx.strokeStyle = '#6b4e38'; ctx.lineWidth = 4;
+      for (let y = 0; y <= 512; y += 64) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke(); }
+      for (let i = 0; i < 80; i++) { const y = Math.floor(Math.random()*512/64)*64; ctx.strokeStyle = `rgba(70,50,30,${0.2+Math.random()*0.4})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y + Math.random()*30); ctx.lineTo(512, y + Math.random()*30); ctx.stroke(); }
+      const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(4, 4);
+      return tex;
+    }
+    const floorMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture(), roughness: 0.8 });
+
+    function createSkyDome() {
+      const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 512); grad.addColorStop(0, '#160d2e'); grad.addColorStop(0.3, '#5c2e5e'); grad.addColorStop(0.5, '#d06a5a'); grad.addColorStop(0.56, '#f5a070'); grad.addColorStop(0.62, '#ffc8a0'); grad.addColorStop(1, '#3f3a4a');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 1024, 512);
+      ctx.beginPath(); ctx.arc(700, 245, 44, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,230,190,.95)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(700, 245, 80, 0, Math.PI*2); ctx.fillStyle = 'rgba(255,190,150,.2)'; ctx.fill();
+      ctx.fillStyle = 'rgba(20,12,28,.8)'; ctx.beginPath(); ctx.moveTo(0, 350); ctx.lineTo(100, 280); ctx.lineTo(220, 320); ctx.lineTo(360, 250); ctx.lineTo(520, 310); ctx.lineTo(700, 260); ctx.lineTo(850, 320); ctx.lineTo(1024, 270); ctx.lineTo(1024, 512); ctx.lineTo(0, 512); ctx.closePath(); ctx.fill();
+      const tex = new THREE.CanvasTexture(canvas); tex.mapping = THREE.EquirectangularReflectionMapping;
+      const sky = new THREE.Mesh(new THREE.SphereGeometry(50, 32, 16), new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false })); sky.renderOrder = -10; scene.add(sky);
+    }
+    createSkyDome();
+
+    function addWindowGlass(x, y, z, rotY, w, h) {
+      const glass = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glassMat); glass.position.set(x, y, z); glass.rotation.y = rotY; glass.renderOrder = 2; scene.add(glass);
+    }
+
+    // ===== 教室 =====
+    function buildClassroom() {
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), floorMat); floor.rotation.x = -Math.PI/2; floor.position.set(0, 0, 0); floor.receiveShadow = true; scene.add(floor);
+      const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), plasterMat); ceiling.rotation.x = Math.PI/2; ceiling.position.set(0, 3, 0); ceiling.receiveShadow = true; scene.add(ceiling);
+      addBoxObstacle(0, 1.5, -5, 10, 3, 0.2, wallMat); addBoxObstacle(0, 1.5, 5, 10, 3, 0.2, wallMat);
+      addInvisibleObstacle(-5, 1.5, 0, 0.2, 3, 10);
+      addBox(-5, 0.6, 0, 0.2, 1.2, 10, wallMat); addBox(-5, 2.5, 0, 0.2, 1, 10, wallMat);
+      addBox(-5, 1.6, -4, 0.2, 0.8, 2, wallMat); addBox(-5, 1.6, 0, 0.2, 0.8, 2, wallMat); addBox(-5, 1.6, 4, 0.2, 0.8, 2, wallMat);
+      addWindowGlass(-4.89, 1.6, -2, Math.PI/2, 2.2, 0.9); addWindowGlass(-4.89, 1.6, 2, Math.PI/2, 2.2, 0.9);
+      addBoxObstacle(5, 1.5, -2.95, 0.2, 3, 4.1, wallMat); addBoxObstacle(5, 1.5, 2.95, 0.2, 3, 4.1, wallMat);
+      addBox(5, 2.6, 0, 0.2, 0.8, 1.8, wallMat);
+      const frontTexture = createChalkboardTexture('请往右边走');
+      const board = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.4, 0.08), new THREE.MeshStandardMaterial({ map: frontTexture, roughness: 0.8 })); board.position.set(0, 2, 4.86); board.castShadow = true; scene.add(board);
+      const boardFrame = new THREE.Mesh(new THREE.BoxGeometry(5.5, 1.7, 0.04), new THREE.MeshStandardMaterial({ color: 0x6b4a2e, roughness: 0.8 })); boardFrame.position.set(0, 2, 4.89); scene.add(boardFrame);
+      const backTexture = createChalkboardTexture('欢迎来到寒冰的网站');
+      const boardBack = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.4, 0.08), new THREE.MeshStandardMaterial({ map: backTexture, roughness: 0.8 })); boardBack.position.set(0, 2, -4.86); boardBack.castShadow = true; scene.add(boardBack);
+      const boardFrameBack = new THREE.Mesh(new THREE.BoxGeometry(5.5, 1.7, 0.04), new THREE.MeshStandardMaterial({ color: 0x6b4a2e, roughness: 0.8 })); boardFrameBack.position.set(0, 2, -4.89); scene.add(boardFrameBack);
+    }
+
+    const paperTexture = (function () {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 512; const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fffaf5'; ctx.fillRect(0, 0, 512, 512);
+      ctx.fillStyle = '#000'; ctx.font = 'bold 72px "KaiTi","STKaiti","SimSun",serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('寒冰', 256, 256);
+      return new THREE.CanvasTexture(c);
+    })();
+
+    function createDesk(x, z, withPaper) {
+      const group = new THREE.Group();
+      const top = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.8), woodMat); top.position.y = 0.76; top.castShadow = true; top.receiveShadow = true; group.add(top);
+      for (const [lx, lz] of [[-0.65,-0.35],[0.65,-0.35],[-0.65,0.35],[0.65,0.35]]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.76, 0.06), darkWoodMat); leg.position.set(lx, 0.38, lz); leg.castShadow = true; group.add(leg); }
+      group.position.set(x, 0, z); scene.add(group);
+      obstacles.push({ minX: x-0.7, maxX: x+0.7, minZ: z-0.4, maxZ: z+0.4 });
+      if (withPaper) { const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.MeshBasicMaterial({ map: paperTexture })); paper.rotation.x = -Math.PI/2; paper.position.set(0, 0.815, 0); group.add(paper); }
+      return group;
+    }
+
+    function createChair(x, z, rotY) {
+      const group = new THREE.Group();
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.05, 0.45), woodMat); seat.position.y = 0.45; seat.castShadow = true; group.add(seat);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.6, 0.05), woodMat); back.position.set(0, 0.75, -0.22); back.castShadow = true; group.add(back);
+      for (const [lx,lz] of [[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]]) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.45, 0.04), darkWoodMat); leg.position.set(lx, 0.225, lz); leg.castShadow = true; group.add(leg); }
+      group.position.set(x, 0, z); group.rotation.y = rotY; scene.add(group);
+    }
+
+    buildClassroom();
+    createDesk(0, -0.6, true);
+    const deskPositions = [[-3,-2],[-1.5,-2],[1.5,-2],[3,-2],[-3,2],[-1.5,2],[1.5,2],[3,2]];
+    for (const [dx,dz] of deskPositions) { createDesk(dx,dz,false); createChair(dx,dz+0.7,Math.PI); }
+    createChair(0, 0.4, Math.PI);
+
+    // 笔记本
+    const notebookGroup = new THREE.Group();
+    function makeNotebookCoverTexture() {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 384; const ctx = c.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 512, 384); grad.addColorStop(0, '#6b4226'); grad.addColorStop(0.5, '#8a5a3a'); grad.addColorStop(1, '#4a2f20');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, 512, 384);
+      ctx.strokeStyle = 'rgba(235,205,160,0.85)'; ctx.lineWidth = 8; ctx.strokeRect(20, 20, 472, 344);
+      ctx.strokeStyle = 'rgba(235,205,160,0.4)'; ctx.lineWidth = 2; ctx.strokeRect(40, 40, 432, 304);
+      ctx.fillStyle = '#f5e6c8'; ctx.font = 'bold 64px "KaiTi","STKaiti","SimSun",serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('寒 冰', 256, 140);
+      ctx.font = '26px "KaiTi","STKaiti",serif'; ctx.fillStyle = 'rgba(245,230,200,.8)'; ctx.fillText('毕业设计 · 手记', 256, 215);
+      ctx.font = '18px "KaiTi",serif'; ctx.fillStyle = 'rgba(245,230,200,.55)'; ctx.fillText('H A N B I N G  ·  N O T E', 256, 290);
+      return new THREE.CanvasTexture(c);
+    }
+    const nbCoverMat = new THREE.MeshStandardMaterial({ map: makeNotebookCoverTexture(), roughness: 0.55, metalness: 0.12 });
+    const nbCover = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.035, 0.4), nbCoverMat); nbCover.position.y = 0.018; nbCover.castShadow = true; notebookGroup.add(nbCover);
+    const nbPagesMat = new THREE.MeshStandardMaterial({ color: 0xfff8ec, roughness: 0.9 });
+    const nbPages = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.022, 0.365), nbPagesMat); nbPages.position.y = 0.043; notebookGroup.add(nbPages);
+    const nbSpine = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.045, 0.42), new THREE.MeshStandardMaterial({ color: 0x2e1c12, roughness: 0.8 })); nbSpine.position.set(0, 0.04, 0); notebookGroup.add(nbSpine);
+    const nbBookmark = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.2), new THREE.MeshStandardMaterial({ color: 0xd9a441, side: THREE.DoubleSide, roughness: 0.6 })); nbBookmark.position.set(0.02, -0.08, 0.18); notebookGroup.add(nbBookmark);
+    notebookGroup.position.set(3, 0.8, 2); scene.add(notebookGroup);
+
+    // ===== 走廊 =====
+    function buildCorridor() {
+      const corridorWidth = 9, corridorLength = 3, corridorCenterX = 9.5;
+      const mainFloor = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength), floorMat); mainFloor.rotation.x = -Math.PI/2; mainFloor.position.set(corridorCenterX, 0, 0); mainFloor.receiveShadow = true; scene.add(mainFloor);
+      const mainCeiling = new THREE.Mesh(new THREE.PlaneGeometry(corridorWidth, corridorLength), plasterMat); mainCeiling.rotation.x = Math.PI/2; mainCeiling.position.set(corridorCenterX, 3, 0); mainCeiling.receiveShadow = true; scene.add(mainCeiling);
+      addBoxObstacle(6.5, 0.5, -1.5, 3, 1, 0.2, wallMat); addBoxObstacle(6.5, 2.4, -1.5, 3, 1.2, 0.2, wallMat);
+      addBoxObstacle(12.5, 0.5, -1.5, 3, 1, 0.2, wallMat); addBoxObstacle(12.5, 2.4, -1.5, 3, 1.2, 0.2, wallMat);
+      addWindowGlass(6.5, 1.4, -1.49, 0, 3, 0.8); addWindowGlass(12.5, 1.4, -1.49, 0, 3, 0.8);
+      addBoxObstacle(6.5, 0.5, 1.5, 3, 1, 0.2, wallMat); addBoxObstacle(6.5, 2.4, 1.5, 3, 1.2, 0.2, wallMat);
+      addBoxObstacle(12.5, 0.5, 1.5, 3, 1, 0.2, wallMat); addBoxObstacle(12.5, 2.4, 1.5, 3, 1.2, 0.2, wallMat);
+      addWindowGlass(6.5, 1.4, 1.49, 0, 3, 0.8); addWindowGlass(12.5, 1.4, 1.49, 0, 3, 0.8);
+      addBoxObstacle(14, 1.5, -1.2, 0.2, 3, 0.6, wallMat); addBoxObstacle(14, 1.5, 1.2, 0.2, 3, 0.6, wallMat);
+      const gateMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+      const gateW = 1.8, gateH = 3.0, gateX = 13.94;
+      const gate = new THREE.Mesh(new THREE.PlaneGeometry(gateW, gateH), gateMat); gate.position.set(gateX, 1.5, 0); gate.rotation.y = Math.PI/2; scene.add(gate);
+      const gateCoreMat = new THREE.MeshBasicMaterial({ color: 0xffffee, transparent: true, opacity: 0.6, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+      const gateCore = new THREE.Mesh(new THREE.PlaneGeometry(gateW-0.08, gateH-0.08), gateCoreMat); gateCore.position.set(gateX-0.02, 1.5, 0); gateCore.rotation.y = Math.PI/2; scene.add(gateCore);
+      const frameMat = new THREE.MeshBasicMaterial({ color: 0xffeedd, transparent: true, opacity: 0.25, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+      function addFrameBar(w,h,y,z){ const bar = new THREE.Mesh(new THREE.PlaneGeometry(w,h), frameMat); bar.position.set(gateX,y,z); bar.rotation.y = Math.PI/2; scene.add(bar); }
+      addFrameBar(gateW, 0.06, 3.0, 0); addFrameBar(gateW, 0.06, 0, 0); addFrameBar(0.06, gateH, 1.5, -gateW/2); addFrameBar(0.06, gateH, 1.5, gateW/2);
+      const gateLight = new THREE.PointLight(0xfff5e0, 2.5, 8); gateLight.position.set(13.5,1.5,0); scene.add(gateLight);
+      const sideWidth = 3, sideLength = 6, leftZMid = -4.5, rightZMid = 4.5;
+      const leftFloor = new THREE.Mesh(new THREE.PlaneGeometry(sideWidth, sideLength), floorMat); leftFloor.rotation.x = -Math.PI/2; leftFloor.position.set(corridorCenterX,0,leftZMid); leftFloor.receiveShadow = true; scene.add(leftFloor);
+      const leftCeiling = new THREE.Mesh(new THREE.PlaneGeometry(sideWidth, sideLength), plasterMat); leftCeiling.rotation.x = Math.PI/2; leftCeiling.position.set(corridorCenterX,3,leftZMid); leftCeiling.receiveShadow = true; scene.add(leftCeiling);
+      const rightFloor = new THREE.Mesh(new THREE.PlaneGeometry(sideWidth, sideLength), floorMat); rightFloor.rotation.x = -Math.PI/2; rightFloor.position.set(corridorCenterX,0,rightZMid); rightFloor.receiveShadow = true; scene.add(rightFloor);
+      const rightCeiling = new THREE.Mesh(new THREE.PlaneGeometry(sideWidth, sideLength), plasterMat); rightCeiling.rotation.x = Math.PI/2; rightCeiling.position.set(corridorCenterX,3,rightZMid); rightCeiling.receiveShadow = true; scene.add(rightCeiling);
+      addBoxObstacle(8, 0.5, leftZMid, 0.2, 1, sideLength, wallMat); addBoxObstacle(8, 2.4, leftZMid, 0.2, 1.2, sideLength, wallMat); addWindowGlass(8, 1.4, leftZMid, Math.PI/2, sideLength, 0.8);
+      addBoxObstacle(11, 0.5, leftZMid, 0.2, 1, sideLength, wallMat); addBoxObstacle(11, 2.4, leftZMid, 0.2, 1.2, sideLength, wallMat); addWindowGlass(11, 1.4, leftZMid, Math.PI/2, sideLength, 0.8);
+      addBoxObstacle(8, 0.5, rightZMid, 0.2, 1, sideLength, wallMat); addBoxObstacle(8, 2.4, rightZMid, 0.2, 1.2, sideLength, wallMat); addWindowGlass(8, 1.4, rightZMid, Math.PI/2, sideLength, 0.8);
+      addBoxObstacle(11, 0.5, rightZMid, 0.2, 1, sideLength, wallMat); addBoxObstacle(11, 2.4, rightZMid, 0.2, 1.2, sideLength, wallMat); addWindowGlass(11, 1.4, rightZMid, Math.PI/2, sideLength, 0.8);
+      addBoxObstacle(corridorCenterX, 0.5, -7.5, sideWidth, 1, 0.2, wallMat); addBoxObstacle(corridorCenterX, 2.4, -7.5, sideWidth, 1.2, 0.2, wallMat); addWindowGlass(corridorCenterX, 1.4, -7.49, 0, sideWidth, 0.8);
+      addBoxObstacle(corridorCenterX, 0.5, 7.5, sideWidth, 1, 0.2, wallMat); addBoxObstacle(corridorCenterX, 2.4, 7.5, sideWidth, 1.2, 0.2, wallMat); addWindowGlass(corridorCenterX, 1.4, 7.49, 0, sideWidth, 0.8);
+      addBoxObstacle(8, 1.5, -7.5, 0.2, 3, 0.2, wallMat); addBoxObstacle(11, 1.5, -7.5, 0.2, 3, 0.2, wallMat);
+      addBoxObstacle(8, 1.5, 7.5, 0.2, 3, 0.2, wallMat); addBoxObstacle(11, 1.5, 7.5, 0.2, 3, 0.2, wallMat);
+      function addConnectorPillar(x,z,height,yCenter){ const p = new THREE.Mesh(new THREE.BoxGeometry(0.2,height,0.2), wallMat); p.position.set(x,yCenter,z); p.castShadow=true; p.receiveShadow=true; scene.add(p); }
+      addConnectorPillar(8,-1.5,1.0,0.5); addConnectorPillar(11,-1.5,1.0,0.5); addConnectorPillar(8,-1.5,1.2,2.4); addConnectorPillar(11,-1.5,1.2,2.4);
+      addConnectorPillar(8,1.5,1.0,0.5); addConnectorPillar(11,1.5,1.0,0.5); addConnectorPillar(8,1.5,1.2,2.4); addConnectorPillar(11,1.5,1.2,2.4);
+      const leftLight = new THREE.PointLight(0xffccaa, 0.8, 8); leftLight.position.set(corridorCenterX,2.5,leftZMid); scene.add(leftLight);
+      const rightLight = new THREE.PointLight(0xffccaa, 0.8, 8); rightLight.position.set(corridorCenterX,2.5,rightZMid); scene.add(rightLight);
+    }
+    buildCorridor();
+
+    // ===== 花草 =====
+    function createPlant() {
+      const group = new THREE.Group();
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.13,0.25,8), new THREE.MeshStandardMaterial({ color:0xa0522d, roughness:0.8 })); pot.position.y = 0.125; pot.castShadow = true; group.add(pot);
+      for (let i=0; i<6; i++) { const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.18,6,6), leafMat); leaf.position.set((Math.random()-0.5)*0.35, 0.35+Math.random()*0.3, (Math.random()-0.5)*0.35); leaf.scale.y = 0.6+Math.random()*0.3; leaf.castShadow = true; group.add(leaf); }
+      const flower = new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8), new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.95+Math.random()*0.1,0.8,0.7), roughness:0.6 })); flower.position.set((Math.random()-0.5)*0.2, 0.65, (Math.random()-0.5)*0.2); flower.castShadow = true; group.add(flower);
+      return group;
+    }
+    const plantPositions = [[6.5,-1.15],[8,-1.15],[11,-1.15],[12.5,-1.15],[6.5,1.15],[8,1.15],[11,1.15],[12.5,1.15],[8.3,-2],[10.7,-2],[8.3,-3.5],[10.7,-3.5],[8.3,-5],[10.7,-5],[8.3,-6.5],[10.7,-6.5],[8.3,2],[10.7,2],[8.3,3.5],[10.7,3.5],[8.3,5],[10.7,5],[8.3,6.5],[10.7,6.5]];
+    for (const [px,pz] of plantPositions) { const p = createPlant(); p.position.set(px,0,pz); scene.add(p); }
+
+    function createHangingVine() {
+      const group = new THREE.Group();
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.02,1.6,5), new THREE.MeshStandardMaterial({ color:0x5b4033, roughness:0.9 })); stem.position.y = -0.8; group.add(stem);
+      for (let i=0; i<9; i++) { const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.18,0.1), Math.random()>0.5?leafMat:oldLeafMat); leaf.position.y = -0.2 - i*0.16; leaf.rotation.z = Math.sin(i*0.8)*0.6; leaf.rotation.x = Math.random()*0.4; group.add(leaf); }
+      return group;
+    }
+    const vinePositions = [[6,-0.8],[7.5,0.6],[11,-1],[12,0.2],[13,0.4],[6.5,1],[8,-1],[11.5,0.4],[12,-0.8],[13.5,-0.6],[8.2,-2],[10.8,-3.5],[9.5,-5],[10.5,-7],[8.2,2],[10.8,3.5],[9.5,5],[10.5,7]];
+    for (const [vx,vz] of vinePositions) { const v = createHangingVine(); v.position.set(vx,3,vz); scene.add(v); }
+
+    function createTree(x,z,scale) {
+      const group = new THREE.Group();
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25*scale,0.4*scale,2*scale,6), new THREE.MeshStandardMaterial({ color:0x2f241a, roughness:1 })); trunk.position.y = scale; group.add(trunk);
+      const canopy = new THREE.Mesh(new THREE.SphereGeometry(2*scale,7,7), new THREE.MeshStandardMaterial({ color:0x2e3a2e, roughness:1 })); canopy.position.y = 2.8*scale; group.add(canopy);
+      group.position.set(x,0,z); scene.add(group);
+    }
+    createTree(-9,-3,1.4); createTree(-11,1,1.0); createTree(7,-10,1.5); createTree(12,10,1.5); createTree(20,0,1.8);
+
+    // 樱花
+    function createPetalTexture() {
+      const c = document.createElement('canvas'); c.width=64; c.height=64; const ctx = c.getContext('2d'); ctx.clearRect(0,0,64,64);
+      const gradient = ctx.createRadialGradient(32,32,2,32,32,28); gradient.addColorStop(0,'rgba(255,220,230,1)'); gradient.addColorStop(0.5,'rgba(255,180,200,0.9)'); gradient.addColorStop(1,'rgba(255,150,180,0.2)');
+      ctx.fillStyle = gradient; ctx.beginPath(); ctx.ellipse(32,32,16,12,0,0,Math.PI*2); ctx.fill(); return new THREE.CanvasTexture(c);
+    }
+    const petalTexture = createPetalTexture(); const petalCount = isMobile?200:500;
+    const petals = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.12,0.08), new THREE.MeshBasicMaterial({ map:petalTexture, transparent:true, side:THREE.DoubleSide, depthWrite:false, opacity:0.9 }), petalCount); scene.add(petals);
+    const petalData = []; const dummy = new THREE.Object3D();
+    function randomPetalPosition() { const area = Math.random(); let x,y,z; if (area<0.25) { x=(Math.random()-0.5)*9; z=(Math.random()-0.5)*9; } else if (area<0.5) { x=5.5+Math.random()*8.5; z=(Math.random()-0.5)*2.6; } else if (area<0.75) { x=8+Math.random()*3; z=-7.5+Math.random()*6; } else { x=8+Math.random()*3; z=1.5+Math.random()*6; } y=0.5+Math.random()*2.8; return {x,y,z}; }
+    for (let i=0;i<petalCount;i++) { const p = randomPetalPosition(); petalData.push({ baseX:p.x,baseZ:p.z,y:p.y, speed:0.3+Math.random()*0.5,swayPhase:Math.random()*Math.PI*2,swaySpeed:0.4+Math.random()*0.8,swayAmp:0.12+Math.random()*0.2,rotSpeed:(Math.random()-0.5)*2,rot:Math.random()*Math.PI*2 }); }
+    function updatePetals(time, dt) { for (let i=0;i<petalCount;i++) { const d=petalData[i]; d.y-=d.speed*dt; if(d.y<0.1){ const p=randomPetalPosition(); d.baseX=p.x; d.baseZ=p.z; d.y=2.6+Math.random()*0.8; d.speed=0.3+Math.random()*0.5; d.swayPhase=Math.random()*Math.PI*2; } const px=d.baseX+Math.sin(time*d.swaySpeed+d.swayPhase)*d.swayAmp; const pz=d.baseZ+Math.cos(time*d.swaySpeed*0.8+d.swayPhase)*d.swayAmp*0.8; d.rot+=d.rotSpeed*dt; dummy.position.set(px,d.y,pz); dummy.rotation.set(Math.sin(time*d.swaySpeed+d.swayPhase)*0.4,d.rot,d.rot*0.8); dummy.scale.setScalar(0.8+Math.sin(time+i)*0.2); dummy.updateMatrix(); petals.setMatrixAt(i, dummy.matrix); } petals.instanceMatrix.needsUpdate = true; }
+
+    // ===== 池核场景 =====
+    function buildPoolScene() {
+      const ambient = new THREE.AmbientLight(0x225566, 0.6); poolScene.add(ambient);
+      const poolLight = new THREE.PointLight(0x88ddff, 2.0, 40); poolLight.position.set(0, 16, 0); poolScene.add(poolLight);
+      const centerLight = new THREE.PointLight(0xaaffee, 3.0, 40); centerLight.position.set(0, 10, 0); poolScene.add(centerLight);
+      function createPoolSky() {
+        const canvas = document.createElement('canvas'); canvas.width=1024; canvas.height=512; const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0,0,0,512); grad.addColorStop(0,'#0a2e4a'); grad.addColorStop(0.4,'#2a6a8a'); grad.addColorStop(0.7,'#7ab0d0'); grad.addColorStop(1,'#c0e0f0');
+        ctx.fillStyle=grad; ctx.fillRect(0,0,1024,512); for (let i=0;i<50;i++) { const x=Math.random()*1024; const y=Math.random()*250+30; const w=50+Math.random()*150; const h=20+Math.random()*40; ctx.beginPath(); ctx.ellipse(x,y,w,h,0,0,Math.PI*2); ctx.fill(); }
+        const tex = new THREE.CanvasTexture(canvas); tex.mapping = THREE.EquirectangularReflectionMapping;
+        const sky = new THREE.Mesh(new THREE.SphereGeometry(200,32,16), new THREE.MeshBasicMaterial({ map:tex, side:THREE.BackSide, fog:false, depthWrite:false })); sky.renderOrder=-10; poolScene.add(sky);
+        const cloudMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.6, side:THREE.DoubleSide });
+        for (let i=0;i<15;i++) { const g=new THREE.Group(); for(let j=0;j<7;j++){ const b=new THREE.Mesh(new THREE.SphereGeometry(Math.random()*3+1,6,6),cloudMat); b.position.set((Math.random()-0.5)*8,(Math.random()-0.5)*1.5,(Math.random()-0.5)*4); g.add(b); } g.position.set((Math.random()-0.5)*240,25+Math.random()*15,(Math.random()-0.5)*240); poolScene.add(g); }
+      }
+      createPoolSky();
+      const waterGeo = new THREE.PlaneGeometry(1000,1000,64,64); waterGeo.rotateX(-Math.PI/2);
+      const waterMat = new THREE.MeshPhongMaterial({ color:0x1a6a8a, transparent:true, opacity:0.85, shininess:120, specular:0x99ccff, emissive:0x0a3344, side:THREE.DoubleSide });
+      waterMesh = new THREE.Mesh(waterGeo,waterMat); waterMesh.position.y=0.5; waterMesh.receiveShadow=true; poolScene.add(waterMesh);
+      const beamMat = new THREE.MeshBasicMaterial({ color:0xccffff, transparent:true, opacity:0.25, blending:THREE.AdditiveBlending });
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,32,16,1,true),beamMat); beam.position.y=16; poolScene.add(beam);
+
+      // 中心光之电梯（带光柱）
+      const carGroup = new THREE.Group();
+      const carDiscMat = new THREE.MeshStandardMaterial({ color:0x9fd8ff, emissive:0x1a4a66, roughness:0.3, metalness:0.35, transparent:true, opacity:0.9, side:THREE.DoubleSide });
+      const carDisc = new THREE.Mesh(new THREE.CylinderGeometry(ELEVATOR_RADIUS,ELEVATOR_RADIUS,0.3,48),carDiscMat); carDisc.position.y=-0.15; carDisc.castShadow=true; carDisc.receiveShadow=true; carGroup.add(carDisc);
+      const carGlassMat = new THREE.MeshPhongMaterial({ color:0xcdf2ff, transparent:true, opacity:0.16, side:THREE.DoubleSide, depthWrite:false });
+      const carGlass = new THREE.Mesh(new THREE.CylinderGeometry(ELEVATOR_RADIUS-0.05,ELEVATOR_RADIUS-0.05,1.15,48,1,true),carGlassMat); carGlass.position.y=0.58; carGroup.add(carGlass);
+      const rimMat = new THREE.MeshBasicMaterial({ color:0x7ff2ff, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending });
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(ELEVATOR_RADIUS-0.05,0.05,8,48),rimMat); rim.rotation.x=Math.PI/2; rim.position.y=0.03; carGroup.add(rim);
+      const topRingMat = new THREE.MeshBasicMaterial({ color:0xfff2b0, transparent:true, opacity:0.9 });
+      const topRing = new THREE.Mesh(new THREE.TorusGeometry(0.55,0.05,8,24),topRingMat); topRing.rotation.x=Math.PI/2; topRing.position.y=1.25; carGroup.add(topRing);
+      const pillarMat = new THREE.MeshBasicMaterial({ color:0x7fe0ff, transparent:true, opacity:0.35, blending:THREE.AdditiveBlending, depthWrite:false });
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,4,16,1,true),pillarMat); pillar.position.y=2.0; carGroup.add(pillar);
+      const carLight = new THREE.PointLight(0x8fdcff,1.8,9); carLight.position.y=1.6; carGroup.add(carLight);
+      poolScene.add(carGroup);
+      elevatorState.group=carGroup; elevatorState.rim=rim; elevatorState.topRing=topRing; elevatorState.y=FLOOR_Y[0]; carGroup.position.y=FLOOR_Y[0];
+
+      function createFloorPlatform(y) {
+        const pMat = new THREE.MeshStandardMaterial({ color:0x88c0d8, roughness:0.3, transparent:true, opacity:0.35, side:THREE.DoubleSide, depthWrite:false });
+        const p = new THREE.Mesh(new THREE.RingGeometry(3.5,6.8,32),pMat); p.rotation.x=-Math.PI/2; p.position.y=y; p.renderOrder=1; poolScene.add(p);
+        const supportMat = new THREE.MeshPhongMaterial({ color:0x6a9aaa, transparent:true, opacity:0.4 });
+        for (let i=0;i<8;i++) { const a=(i/8)*Math.PI*2; const x=Math.cos(a)*5.2,z=Math.sin(a)*5.2; const s=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,3,8),supportMat); s.position.set(x,y-1.5,z); poolScene.add(s); }
+        const railMat = new THREE.MeshPhongMaterial({ color:0xaaddff, transparent:true, opacity:0.5 });
+        for (let i=0;i<24;i++) { const a=(i/24)*Math.PI*2; const x=Math.cos(a)*6.8,z=Math.sin(a)*6.8; const r=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,1.0,6),railMat); r.position.set(x,y+0.5,z); poolScene.add(r); }
+      }
+      for (let i=0;i<TOTAL_FLOORS;i++) createFloorPlatform(FLOOR_Y[i]);
+      const backGateMat = new THREE.MeshBasicMaterial({ color:0xffffee, transparent:true, opacity:0.5, side:THREE.DoubleSide, blending:THREE.AdditiveBlending });
+      for (let i=0;i<TOTAL_FLOORS;i++) { const y=FLOOR_Y[i]; const g=new THREE.Mesh(new THREE.CircleGeometry(0.8,16),backGateMat); g.position.set(5.5,y+0.8,0); g.rotation.y=Math.PI; poolScene.add(g); const glow=new THREE.PointLight(0xffeedd,0.6,5); glow.position.set(5.5,y+0.8,0); poolScene.add(glow); }
+      function createPoolButton(angle, y, layerIndex, btnIndex) {
+        const data = floorData[layerIndex].buttons[btnIndex]; const lift = layerIndex>=1?0.75:0; const btnY=y+lift; const nameY=y+1.2+lift;
+        const btnCanvas=document.createElement('canvas'); btnCanvas.width=128; btnCanvas.height=128; const bctx=btnCanvas.getContext('2d'); bctx.fillStyle='#00aaaa'; bctx.fillRect(0,0,128,128); bctx.fillStyle='#fff'; bctx.font='20px KaiTi'; bctx.textAlign='center'; bctx.textBaseline='middle'; bctx.fillText(data.label,64,64); const btnTex=new THREE.CanvasTexture(btnCanvas); const btnMat=new THREE.MeshBasicMaterial({ map:btnTex, side:THREE.DoubleSide });
+        const btn=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.5),btnMat); const x=Math.cos(angle)*6.8, z=Math.sin(angle)*6.8; btn.position.set(x,btnY,z); btn.lookAt(0,btnY,0); poolScene.add(btn); poolButtons.push({ mesh:btn, angle, y:btnY, layer:layerIndex, index:btnIndex, url:data.url });
+        const nameCanvas=document.createElement('canvas'); nameCanvas.width=256; nameCanvas.height=64; const nctx=nameCanvas.getContext('2d'); nctx.fillStyle='#ffffff'; nctx.font='22px KaiTi'; nctx.textAlign='center'; nctx.textBaseline='middle'; nctx.fillText(data.name,128,32); const nameTex=new THREE.CanvasTexture(nameCanvas); const nameMat=new THREE.MeshBasicMaterial({ map:nameTex, transparent:true }); const namePlane=new THREE.Mesh(new THREE.PlaneGeometry(2.5,0.8),nameMat); namePlane.position.set(x,nameY,z); namePlane.lookAt(0,nameY,0); poolScene.add(namePlane);
+      }
+      for (let layer=0;layer<TOTAL_FLOORS;layer++) { const y=FLOOR_Y[layer]; for (let i=0;i<16;i++) { const angle=(i/16)*Math.PI*2; createPoolButton(angle,y,layer,i); } }
+      function createTopicText(y, text) { const topicCanvas=document.createElement('canvas'); topicCanvas.width=512; topicCanvas.height=128; const tctx=topicCanvas.getContext('2d'); tctx.fillStyle='#ffcc00'; tctx.font='bold 52px KaiTi'; tctx.textAlign='center'; tctx.textBaseline='middle'; tctx.fillText(text,256,64); const topicTex=new THREE.CanvasTexture(topicCanvas); const topicMat=new THREE.MeshBasicMaterial({ map:topicTex, transparent:true, side:THREE.DoubleSide }); const topicPlane=new THREE.Mesh(new THREE.PlaneGeometry(3,0.9),topicMat); topicPlane.position.set(0,y+1.5,2.5); topicPlane.lookAt(0,y+1.5,0); poolScene.add(topicPlane); }
+      for (let layer=0;layer<TOTAL_FLOORS;layer++) createTopicText(FLOOR_Y[layer], floorData[layer].theme);
+      for (let i=0;i<150;i++) { const dotMat=new THREE.MeshBasicMaterial({ color:new THREE.Color().setHSL(0.55,0.8,0.8), transparent:true, opacity:0.6 }); const dot=new THREE.Mesh(new THREE.SphereGeometry(0.05,4,4),dotMat); const angle=Math.random()*Math.PI*2; const radius=1.0+Math.random()*5.5; const yLevel=0.5+Math.random()*30; dot.position.set(Math.cos(angle)*radius,yLevel,Math.sin(angle)*radius); poolScene.add(dot); }
+      // 顶层天上的巨大白色圆环
+      const bigRingMat = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.35, side:THREE.DoubleSide, blending:THREE.AdditiveBlending, depthWrite:false });
+      const bigRing = new THREE.Mesh(new THREE.TorusGeometry(45,1.2,16,64), bigRingMat);
+      bigRing.position.set(0,50,0); bigRing.rotation.x=Math.PI/2; poolScene.add(bigRing);
+    }
+    buildPoolScene();
+
+    function updateWater(time) { if(!waterMesh)return; const pos=waterMesh.geometry.attributes.position; const count=pos.count; for(let i=0;i<count;i++){ const x=pos.getX(i); const z=pos.getZ(i); const y=Math.sin(x*0.05+time*0.5)*0.15+Math.cos(z*0.05+time*0.3)*0.15; pos.setY(i,y); } pos.needsUpdate=true; waterMesh.geometry.computeVertexNormals(); }
+
+    function getPoolGroundY(x, z, footY) {
+      const r = Math.sqrt(x*x+z*z);
+      if (r < ELEVATOR_RADIUS && Math.abs(footY - elevatorState.y) < 1.5) return elevatorState.y;
+      if (r >= 3.5 && r <= 6.8) { let best=FLOOR_Y[0], bestDiff=Infinity; for (const fy of FLOOR_Y) { const d=Math.abs(footY-fy); if(d<bestDiff){bestDiff=d;best=fy;} } return best; }
+      return 0.5;
+    }
+
+    // ===== 交互 =====
+    function checkPaperLook() {
+      if(isViewingPaper) return;
+      if(isMobile) return;
+      const paperPos=new THREE.Vector3(0,0.815,-0.6); const camPos=camera.position; const dir=new THREE.Vector3(); camera.getWorldDirection(dir); const toPaper=paperPos.clone().sub(camPos).normalize(); const dot=dir.dot(toPaper); const dist=camPos.distanceTo(paperPos); const prompt=document.getElementById('paperPrompt'); if(dot>0.92&&dist<3.0){ prompt.textContent='F 查看'; prompt.dataset.target='paper'; prompt.style.display='block'; } else if(prompt.dataset.target==='paper'){ prompt.style.display='none'; }
+    }
+    function checkNotebookLook() {
+      if(isViewingPaper) return;
+      if(isMobile) return;
+      const bookPos=new THREE.Vector3(3,0.83,2); const camPos=camera.position; const dir=new THREE.Vector3(); camera.getWorldDirection(dir); const toBook=bookPos.clone().sub(camPos).normalize(); const dot=dir.dot(toBook); const dist=camPos.distanceTo(bookPos); const prompt=document.getElementById('paperPrompt'); if(dot>0.92&&dist<3.0){ prompt.textContent='F 查看'; prompt.dataset.target='notebook'; prompt.style.display='block'; } else if(prompt.dataset.target==='notebook'){ prompt.style.display='none'; }
+    }
+    function setViewingPaper(viewing) {
+      isViewingPaper=viewing; const overlay=document.getElementById('paperViewOverlay'); const prompt=document.getElementById('paperPrompt'); if(viewing){ overlay.style.display='flex'; prompt.style.display='none'; if(pointerLocked&&!isMobile)document.exitPointerLock(); } else { overlay.style.display='none'; if(!isMobile&&!pointerLocked&&!document.pointerLockElement)renderer.domElement.requestPointerLock(); }
+    }
+    function showNotebook() {
+      const overlay=document.getElementById('notebookViewOverlay'); overlay.style.display='flex'; document.getElementById('paperPrompt').style.display='none'; isViewingPaper=true; if(pointerLocked&&!isMobile)document.exitPointerLock();
+    }
+    function closeNotebook() {
+      document.getElementById('notebookViewOverlay').style.display='none'; isViewingPaper=false; if(!isMobile&&!pointerLocked&&!document.pointerLockElement)renderer.domElement.requestPointerLock();// 手机端点击纸以外的空白区域关闭
+document.getElementById('paperViewOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) setViewingPaper(false);
+});    }
+    document.getElementById('notebookClose').addEventListener('click', (e) => { e.stopPropagation(); closeNotebook(); });
+    document.getElementById('paperClose').addEventListener('click', (e) => { e.stopPropagation(); setViewingPaper(false); });
+// 纸：点击卡片外任意空白关闭（电脑手机通用）
+document.getElementById('paperViewOverlay').addEventListener('click', (e) => {
+  if (!e.target.closest('.paper-card')) {
+    setViewingPaper(false);
+  }
+});
+
+    document.getElementById('notebookViewOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeNotebook();
+    });
+
+    document.getElementById('elevatorViewOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeElevatorMenu();
+});
+
+    function checkChairSit() {
+      if(currentScene!==scene||isViewingPaper) return;
+      if(isMobile) return;
+      let nearestChair=null, minDist=9999;
+      for(const cp of chairPositions){ const dx=camera.position.x-cp.x, dz=camera.position.z-cp.z, dist=dx*dx+dz*dz; if(dist<minDist){minDist=dist;nearestChair=cp;} }
+      const prompt=document.getElementById('sitPrompt');
+      if(nearestChair&&minDist<1.5*1.5){ if(isSitting)prompt.textContent='F 起来'; else prompt.textContent='F 坐下'; prompt.style.display='block'; isNearChair=true; } else { prompt.style.display='none'; isNearChair=false; }
+    }
+    function startSitAnimation() {
+      if(isSitting) return;
+      let nearestChair=null, minDist=9999;
+      for(const cp of chairPositions){ const dx=camera.position.x-cp.x, dz=camera.position.z-cp.z, dist=dx*dx+dz*dz; if(dist<minDist){minDist=dist;nearestChair=cp;} }
+      if(!nearestChair)return;
+      isSitting=true; sitFromPos=camera.position.clone(); sitToPos=new THREE.Vector3(nearestChair.x,SIT_Y,nearestChair.z); sitAnim=0; 
+    }
+    function startStandAnimation() {
+      if(!isSitting)return;
+      isSitting=false; sitFromPos=camera.position.clone(); sitToPos=new THREE.Vector3(sitFromPos.x,STAND_Y,sitFromPos.z); sitAnim=1; 
+    }
+    function updateSitAnimation(dt) {
+      if(isSitting){
+        if(sitAnim<1){ sitAnim=Math.min(1,sitAnim+dt*1.5); const t=smoothstep(sitAnim); camera.position.x=sitFromPos.x+(sitToPos.x-sitFromPos.x)*t; camera.position.z=sitFromPos.z+(sitToPos.z-sitFromPos.z)*t; camera.position.y=sitFromPos.y+(sitToPos.y-sitFromPos.y)*t; }
+        else { camera.position.copy(sitToPos); standing=false; canMove=false; }
+      } else {
+        if(sitAnim>0){ sitAnim=Math.max(0,sitAnim-dt*2.0); const t=1-smoothstep(sitAnim); camera.position.x=sitFromPos.x+(sitToPos.x-sitFromPos.x)*t; camera.position.z=sitFromPos.z+(sitToPos.z-sitFromPos.z)*t; camera.position.y=sitFromPos.y+(sitToPos.y-sitFromPos.y)*t+Math.sin(t*Math.PI)*0.05; }
+        else { standing=true; canMove=true; if(currentScene===scene) camera.position.y=STAND_Y; }
+      }
+    }
+
+    function switchToPool() { poolEntryPos=camera.position.clone(); currentScene=poolScene; camera.position.set(0,FLOOR_Y[0]+POOL_EYE,6.5); yawAngle=Math.PI; pitchAngle=-0.15; standing=true; canMove=true; standProgress=1; jumping=false; yVel=0; document.getElementById('poolGatePrompt').style.display='none'; initElevator(); }
+    function switchToSchool() { currentScene=scene; if(poolEntryPos){ camera.position.copy(poolEntryPos); poolEntryPos=null; } else { camera.position.set(13.0,1.5,0); } yawAngle=Math.PI; pitchAngle=-0.15; standing=true; canMove=true; standProgress=1; jumping=false; yVel=0; document.getElementById('poolGatePrompt').style.display='none'; initElevator(); }
+
+    // ===== 电梯逻辑 =====
+    function initElevator() { elevatorState.floor=0; elevatorState.y=FLOOR_Y[0]; elevatorState.targetFloor=null; elevatorState.moving=false; elevatorState.ready=false; elevatorState.riding=false; if(elevatorState.group) elevatorState.group.position.y=elevatorState.y; document.getElementById('elevatorPrompt').style.display='none'; document.getElementById('elevatorViewOverlay').style.display='none'; elevatorMenuOpen=false; }
+    function updateRiding() { const e=elevatorState; if(currentScene!==poolScene){ e.riding=false; return; } const r=Math.hypot(camera.position.x,camera.position.z); const near=r<ELEVATOR_CALL_RADIUS && Math.abs(camera.position.y-(e.y+POOL_EYE))<1.5; if(e.moving){ e.riding=true; } else { e.riding=near; } }
+    function updateElevator(dt) { const e=elevatorState; if(!e.group)return; if(!e.moving){ e.y=FLOOR_Y[e.floor]; e.group.position.y=e.y; if(e.rim)e.rim.material.opacity=0.6+Math.sin(performance.now()*0.003)*0.25; return; } const targetY=FLOOR_Y[e.targetFloor]; const dir=targetY>e.y?1:-1; e.y+=dir*ELEVATOR_SPEED*dt; if((dir>0&&e.y>=targetY)||(dir<0&&e.y<=targetY)){ e.y=targetY; e.floor=e.targetFloor; e.targetFloor=null; e.moving=false; } e.group.position.y=e.y; if(e.rim)e.rim.material.opacity=0.9+Math.sin(performance.now()*0.02)*0.1; if(e.topRing)e.topRing.rotation.z+=dt*2; }
+    function updateElevatorPrompt() {
+      const e=elevatorState;
+      const prompt=document.getElementById('elevatorPrompt');
+      // 手机端不再显示此提示条，已有底部按钮
+      if(isMobile || currentScene!==poolScene || e.moving || isViewingPaper || elevatorMenuOpen) {
+        if(prompt) prompt.style.display='none';
+        e.ready=false;
+        return;
+      }
+      const r=Math.hypot(camera.position.x,camera.position.z);
+      const near=r<ELEVATOR_CALL_RADIUS && Math.abs(camera.position.y-(e.y+POOL_EYE))<1.2;
+      if(near){ prompt.textContent='F 选择楼层'; prompt.style.display='block'; e.ready=true; } else { prompt.style.display='none'; e.ready=false; }
+    }
+    function openElevatorMenu() { if(elevatorState.moving)return; elevatorMenuOpen=true; const overlay=document.getElementById('elevatorViewOverlay'); const container=document.getElementById('elevatorFloors'); container.innerHTML=''; floorData.forEach((fd,i)=>{ const b=document.createElement('button'); b.className='el-floor-btn'; if(i===elevatorState.floor)b.classList.add('el-current'); b.textContent=(i+1)+'F · '+fd.theme; b.addEventListener('click',()=>chooseElevatorFloor(i)); container.appendChild(b); }); document.getElementById('elevatorCurrent').textContent=(elevatorState.floor+1); overlay.style.display='flex'; document.getElementById('elevatorPrompt').style.display='none'; if(pointerLocked&&!isMobile)document.exitPointerLock(); }
+    function closeElevatorMenu() { elevatorMenuOpen=false; document.getElementById('elevatorViewOverlay').style.display='none'; if(!isMobile&&!pointerLocked&&!document.pointerLockElement)renderer.domElement.requestPointerLock(); }
+    function chooseElevatorFloor(target) { if(elevatorState.moving){ closeElevatorMenu(); return; } if(target===elevatorState.floor){ closeElevatorMenu(); return; } const r=Math.hypot(camera.position.x,camera.position.z); if(r>ELEVATOR_CALL_RADIUS){ closeElevatorMenu(); return; } camera.position.x=0; camera.position.z=0; elevatorState.riding=true; elevatorState.targetFloor=target; elevatorState.moving=true; closeElevatorMenu(); }
+    document.getElementById('elevatorClose').addEventListener('click', closeElevatorMenu);
+
+    function checkPoolGate() {
+      if(isMobile) return; // 手机端不显示电脑端F提示条
+      if(currentScene!==poolScene)return;
+      if(isViewingPaper)return;
+      if(elevatorState.moving)return;
+      let nearestLayer=0,best=Infinity; for(let i=0;i<TOTAL_FLOORS;i++){ const d=Math.abs(camera.position.y-POOL_EYE-FLOOR_Y[i]); if(d<best){best=d;nearestLayer=i;} } const gatePos=new THREE.Vector3(5.5,FLOOR_Y[nearestLayer]+0.8,0); const dir=new THREE.Vector3(); camera.getWorldDirection(dir); const toGate=gatePos.clone().sub(camera.position).normalize(); const dot=dir.dot(toGate); const dist=camera.position.distanceTo(gatePos); const prompt=document.getElementById('poolGatePrompt'); if(dot>0.9&&dist<4.2){ prompt.style.display='block'; poolGateReady=true; } else { prompt.style.display='none'; poolGateReady=false; }
+    }
+
+    // ===== 手机通用交互按钮（仅手机显示 + 返回光门） =====
+    function updateMobileActionBtn() {
+      const b = document.getElementById('elevatorMobileBtn');
+      if (!b) return;
+      if (!isMobile) { b.style.display='none'; mobileAction='none'; return; }
+      if (isViewingPaper || elevatorMenuOpen) { b.style.display='none'; mobileAction='none'; return; }
+      if (currentScene === scene) {
+        let found = false;
+        const camPos = camera.position;
+        const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+        let paperPos = new THREE.Vector3(0,0.815,-0.6);
+        let toPaper = paperPos.clone().sub(camPos).normalize();
+        let dot = dir.dot(toPaper);
+        let dist = camPos.distanceTo(paperPos);
+        if (dot > 0.92 && dist < 3.0) { b.textContent='查看'; mobileAction='paper'; b.style.display='block'; found=true; }
+        if (!found) {
+          let bookPos = new THREE.Vector3(3,0.83,2);
+          let toBook = bookPos.clone().sub(camPos).normalize();
+          let dotBook = dir.dot(toBook);
+          let distBook = camPos.distanceTo(bookPos);
+          if (dotBook > 0.92 && distBook < 3.0) { b.textContent='查看'; mobileAction='notebook'; b.style.display='block'; found=true; }
+        }
+        if (!found) {
+          let nearestChair = null, minDist = 9999;
+          for (const cp of chairPositions) { const dx=camera.position.x-cp.x, dz=camera.position.z-cp.z, distChair=dx*dx+dz*dz; if(distChair<minDist){minDist=distChair;nearestChair=cp;} }
+          if (nearestChair && minDist < 1.5*1.5) { b.textContent = isSitting?'起来':'坐下'; mobileAction = isSitting?'stand':'sit'; b.style.display='block'; found=true; }
+        }
+        if (!found) { b.style.display='none'; mobileAction='none'; }
+      } else if (currentScene === poolScene) {
+        let found = false;
+        let nearestLayer=0,best=Infinity; for(let i=0;i<TOTAL_FLOORS;i++){ const d=Math.abs(camera.position.y-POOL_EYE-FLOOR_Y[i]); if(d<best){best=d;nearestLayer=i;} }
+        const gatePos=new THREE.Vector3(5.5,FLOOR_Y[nearestLayer]+0.8,0); const dir=new THREE.Vector3(); camera.getWorldDirection(dir); const toGate=gatePos.clone().sub(camera.position).normalize(); const dot=dir.dot(toGate); const distGate=camera.position.distanceTo(gatePos);
+        if(dot>0.9&&distGate<4.2){ b.textContent='返回'; mobileAction='poolgate'; b.style.display='block'; found=true; }
+        if(!found){ const r=Math.hypot(camera.position.x,camera.position.z); if(r<ELEVATOR_CALL_RADIUS && Math.abs(camera.position.y-(elevatorState.y+POOL_EYE))<1.2){ b.textContent=' 乘梯'; mobileAction='elevator'; b.style.display='block'; found=true; } }
+        if (!found) { b.style.display='none'; mobileAction='none'; }
+      } else { b.style.display='none'; mobileAction='none'; }
+    }
+
+    document.getElementById('elevatorMobileBtn').addEventListener('click', () => {
+      if (mobileAction === 'elevator') openElevatorMenu();
+      else if (mobileAction === 'paper') setViewingPaper(true);
+      else if (mobileAction === 'notebook') showNotebook();
+      else if (mobileAction === 'sit') startSitAnimation();
+      else if (mobileAction === 'stand') startStandAnimation();
+      else if (mobileAction === 'poolgate') { poolGateReady=false; document.getElementById('poolGatePrompt').style.display='none'; switchToSchool(); }
+    });
+
+    // ===== 横竖屏 =====
+    function isPortrait(){ return window.innerHeight>window.innerWidth; } let cssForced=false;
+    function applyCssRotate(force){
+      gameWrap.classList.remove('invert-180');
+      if(force){
+        gameWrap.classList.add('rotated');
+        cssForced=true;
+        camera.aspect=innerHeight/innerWidth; camera.updateProjectionMatrix(); renderer.setSize(innerHeight,innerWidth);
+      } else {
+        gameWrap.classList.remove('rotated');
+        cssForced=false;
+        camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight);
+      }
+    }
+    function syncOrientationCorrection(){ if(screen.orientation&&screen.orientation.angle===180)gameWrap.classList.add('invert-180'); else gameWrap.classList.remove('invert-180'); }
+    function toLocal(clientX,clientY){ if(gameWrap.classList.contains('rotated')&&gameWrap.classList.contains('invert-180')){ const w=gameWrap.clientWidth,h=gameWrap.clientHeight; const cx=window.innerWidth/2,cy=window.innerHeight/2; return {x:-(clientY-cy)+w/2,y:(clientX-cx)+h/2}; } if(gameWrap.classList.contains('rotated')){ const w=gameWrap.clientWidth,h=gameWrap.clientHeight; const cx=window.innerWidth/2,cy=window.innerHeight/2; return {x:(clientY-cy)+w/2,y:(cx-clientX)+h/2}; } if(gameWrap.classList.contains('invert-180'))return {x:window.innerWidth-clientX,y:window.innerHeight-clientY}; return {x:clientX,y:clientY}; }
+    function toggleOrientation(){
+      // 只切换：竖屏 ←→ 横屏（纯 CSS 旋转，不会出现 180° 反向）
+      if(gameWrap.classList.contains('rotated')){
+        applyCssRotate(false);
+      } else {
+        applyCssRotate(true);
+      }
+    }
+
+    // ===== 玩法提示 =====
+    let hintTimer=null,hintShown=false,hintListenersAttached=false;
+    function showGameplayHint(){ const hint=document.getElementById('gameplayHint'); if(hint){hint.style.display='block';hintShown=true;} } function hideGameplayHint(){ const hint=document.getElementById('gameplayHint'); if(hint){hint.style.display='none';hintShown=false;} }
+    function userInteracted(){ if(hintTimer){clearTimeout(hintTimer);hintTimer=null;} if(hintShown)hideGameplayHint(); }
+    function attachHintListeners(){ if(hintListenersAttached)return; hintListenersAttached=true; document.addEventListener('mousemove',userInteracted,{passive:true}); document.addEventListener('keydown',userInteracted); document.addEventListener('touchstart',userInteracted,{passive:true}); }
+    const overlay=document.getElementById('overlay'); const rotateHintGame=document.getElementById('rotateHintGame');
+    let started = false;
+    function startExperience(){
+      if(!started){
+        started = true;
+        if(hintTimer){clearTimeout(hintTimer);hintTimer=null;}
+        hideGameplayHint(); attachHintListeners(); hintTimer=setTimeout(showGameplayHint,3000);
+        if(isMobile){
+          touchActive=true; pointerLocked=true;
+          document.getElementById('touchControls').style.display='block';
+          rotateHintGame.style.display='block';
+          syncOrientationCorrection();
+        }
+      }
+      overlay.style.display='none';
+      if(!isMobile){
+        // 每次点击都重新请求指针锁定（包括按 Win 键丢失后）
+        renderer.domElement.requestPointerLock();
+      }
+    }
+    // 显示“点击移动视角”提示
+    overlay.style.display='flex';
+    overlay.addEventListener('click', function startHandler(){
+      startExperience();
+    });
+    rotateHintGame.addEventListener('click',(e)=>{e.stopPropagation();toggleOrientation();});
+    document.addEventListener('click',(e)=>{
+      if(isMobile||!started||isViewingPaper||elevatorMenuOpen||altToggling) return;
+      if(document.pointerLockElement) return;
+      const t=e.target;
+      if(t && t.closest && t.closest('meting-js,aplayer,.aplayer,#elevatorMobileBtn,#rotateHintGame')) return;
+      renderer.domElement.requestPointerLock();
+    });
+
+    // ===== 指针锁定（Alt 松开后无限重试） =====
+    let altToggling=false;
+    document.addEventListener('pointerlockchange',()=>{
+      if(!isMobile){
+        pointerLocked = document.pointerLockElement === renderer.domElement;
+        if(isViewingPaper) overlay.style.display='none';
+        else if(altToggling) overlay.style.display='none';
+        else if(elevatorMenuOpen) overlay.style.display='none';
+        else if(started && !pointerLocked) overlay.style.display='flex'; // 指针意外丢失（如按Win键）→ 显示提示
+        else overlay.style.display='none';
+      }
+    });
+    document.addEventListener('mousemove',(e)=>{ if(!pointerLocked||isMobile||isViewingPaper)return; yawAngle-=e.movementX*0.002; pitchAngle-=e.movementY*0.002; pitchAngle=Math.max(-1.4,Math.min(1.4,pitchAngle)); });
+
+    window.addEventListener('keydown',(e)=>{ if(isMobile) return; if((e.code==='AltLeft'||e.code==='AltRight') && !altToggling && pointerLocked && !isViewingPaper && !elevatorMenuOpen && overlay.style.display !== 'flex'){ altToggling=true; document.exitPointerLock(); } });
+    window.addEventListener('keyup',(e)=>{ if(isMobile) return; if(e.code==='AltLeft'||e.code==='AltRight'){ if(altToggling){ altToggling=false; setTimeout(()=>{ const tryLock=()=>{ if(!isViewingPaper && !elevatorMenuOpen && overlay.style.display !== 'flex' && !document.pointerLockElement){ renderer.domElement.requestPointerLock(); setTimeout(tryLock,120); } }; tryLock(); },200); } } });
+
+    const movementKeys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
+    window.addEventListener('keydown',(e)=>{ keys[e.code]=true; if(pointerLocked&&!standing&&movementKeys.includes(e.code)&&!isViewingPaper&&!isSitting&&sitAnim===0&&!canMove){standing=true;standProgress=0;} if(e.code==='KeyF'){ if(elevatorMenuOpen){ closeElevatorMenu(); } else if(document.getElementById('notebookViewOverlay').style.display==='flex'){ closeNotebook(); } else if(isViewingPaper){ setViewingPaper(false); } else if(document.getElementById('paperPrompt').style.display==='block'){ const target=document.getElementById('paperPrompt').dataset.target; if(target==='notebook'){showNotebook();} else {setViewingPaper(true);} } else if(document.getElementById('sitPrompt').style.display==='block'){ if(!isSitting&&standing)startSitAnimation(); else if(isSitting)startStandAnimation(); } else if(poolGateReady){ switchToSchool(); poolGateReady=false; document.getElementById('poolGatePrompt').style.display='none'; } else if(currentScene===poolScene && elevatorState.ready && !elevatorState.moving){ openElevatorMenu(); } } });
+    window.addEventListener('keyup',(e)=>{keys[e.code]=false;}); window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
+
+    // ===== 手机触控 =====
+    if(isMobile){
+      let moveTouchId=null,moveCenter=null;
+      document.getElementById('moveArea').addEventListener('touchstart',(e)=>{const t=e.changedTouches[0];const p=toLocal(t.clientX,t.clientY);moveTouchId=t.identifier;moveCenter=p;moveStick.style.display='block';moveStick.style.left=`${p.x}px`;moveStick.style.top=`${p.y}px`;});
+      document.getElementById('moveArea').addEventListener('touchmove',(e)=>{for(const t of e.changedTouches){if(t.identifier!==moveTouchId)continue;const p=toLocal(t.clientX,t.clientY);const dx=p.x-moveCenter.x,dy=p.y-moveCenter.y;const len=Math.hypot(dx,dy);const cl=Math.min(len,40);const a=Math.atan2(dy,dx);const mx=Math.cos(a)*cl,my=Math.sin(a)*cl;moveStick.style.left=`${moveCenter.x+mx}px`;moveStick.style.top=`${moveCenter.y+my}px`;if(len>12&&!standing&&!isViewingPaper&&!isSitting&&sitAnim===0&&!canMove){standing=true;standProgress=0;}keys['KeyW']=my<-10;keys['KeyS']=my>10;keys['KeyA']=mx<-10;keys['KeyD']=mx>10;}});
+      document.getElementById('moveArea').addEventListener('touchend',(e)=>{for(const t of e.changedTouches){if(t.identifier===moveTouchId){moveTouchId=null;moveStick.style.display='none';keys['KeyW']=keys['KeyS']=keys['KeyA']=keys['KeyD']=false;}}});
+      let lookTouchId=null,lookCenter=null,lastLookPos=null;
+      document.getElementById('lookArea').addEventListener('touchstart',(e)=>{const t=e.changedTouches[0];const p=toLocal(t.clientX,t.clientY);lookTouchId=t.identifier;lookCenter=p;lastLookPos=p;lookStick.style.display='block';lookStick.style.left=`${p.x}px`;lookStick.style.top=`${p.y}px`;});
+      document.getElementById('lookArea').addEventListener('touchmove',(e)=>{for(const t of e.changedTouches){if(t.identifier!==lookTouchId)continue;if(isViewingPaper)continue;const p=toLocal(t.clientX,t.clientY);const dx=p.x-lastLookPos.x,dy=p.y-lastLookPos.y;lastLookPos=p;yawAngle-=dx*lookSensitivity;pitchAngle-=dy*lookSensitivity;pitchAngle=Math.max(-1.4,Math.min(1.4,pitchAngle));const offX=p.x-lookCenter.x,offY=p.y-lookCenter.y;const cl=Math.min(Math.hypot(offX,offY),40);const a=Math.atan2(offY,offX);lookStick.style.left=`${lookCenter.x+Math.cos(a)*cl}px`;lookStick.style.top=`${lookCenter.y+Math.sin(a)*cl}px`;}});
+      document.getElementById('lookArea').addEventListener('touchend',(e)=>{for(const t of e.changedTouches){if(t.identifier===lookTouchId){lookTouchId=null;lookStick.style.display='none';}}});
+    }
+
+    // 点击池核按钮跳转
+    let tapStartInfo=null; document.addEventListener('touchstart',(e)=>{ const t=e.changedTouches[0]; tapStartInfo={x:t.clientX,y:t.clientY,time:performance.now()}; },{passive:true});
+    document.addEventListener('touchend',(e)=>{ if(!tapStartInfo)return; const t=e.changedTouches[0]; const dx=t.clientX-tapStartInfo.x,dy=t.clientY-tapStartInfo.y,dtime=performance.now()-tapStartInfo.time; tapStartInfo=null; if(Math.hypot(dx,dy)>12||dtime>600)return; if(currentScene!==poolScene)return; if(isViewingPaper)return; if(elevatorMenuOpen)return; const hitEl=document.elementFromPoint(t.clientX,t.clientY); if(hitEl&&hitEl.closest&&hitEl.closest('#elevatorMobileBtn'))return; const mouse=new THREE.Vector2((t.clientX/innerWidth)*2-1,-(t.clientY/innerHeight)*2+1); const raycaster=new THREE.Raycaster(); raycaster.setFromCamera(mouse,camera); const meshes=poolButtons.map(b=>b.mesh); const intersects=raycaster.intersectObjects(meshes); if(intersects.length>0){ const idx=meshes.indexOf(intersects[0].object); if(idx>=0)window.open(poolButtons[idx].url,'_blank'); } });
+
+    function smoothstep(t){return t*t*(3-2*t);}
+    function updateMovement(dt){ if(isViewingPaper||isSitting||sitAnim>0)return; if(!canMove||!pointerLocked)return; const forward=new THREE.Vector3(-Math.sin(yawAngle),0,-Math.cos(yawAngle)); const right=new THREE.Vector3(Math.cos(yawAngle),0,-Math.sin(yawAngle)); const move=new THREE.Vector3(); if(keys['KeyW']||keys['ArrowUp'])move.add(forward); if(keys['KeyS']||keys['ArrowDown'])move.sub(forward); if(keys['KeyD']||keys['ArrowRight'])move.add(right); if(keys['KeyA']||keys['ArrowLeft'])move.sub(right); if(move.lengthSq()===0){bobPhase=0;if(currentScene===scene)camera.position.y=STAND_Y;return;} move.normalize().multiplyScalar(2.4*dt); if(currentScene===scene){ const nX=camera.position.clone(); nX.x+=move.x; collide(nX); camera.position.x=nX.x; const nZ=camera.position.clone(); nZ.z+=move.z; collide(nZ); camera.position.z=nZ.z; if(camera.position.x>13.2&&Math.abs(camera.position.z)<0.9){switchToPool();return;} bobPhase+=dt*9; camera.position.y=STAND_Y+Math.sin(bobPhase)*0.03; } else if(currentScene===poolScene){ if(elevatorState.moving)return; const nP=camera.position.clone(); nP.x+=move.x; collide3D(poolObstacles,nP); camera.position.x=nP.x; nP.z+=move.z; collide3D(poolObstacles,nP); camera.position.z=nP.z; const r=Math.sqrt(camera.position.x**2+camera.position.z**2); const maxR=6.8; if(r>maxR){const s=maxR/r;camera.position.x*=s;camera.position.z*=s;} if(!jumping){ const newFootY=getPoolGroundY(camera.position.x,camera.position.z,camera.position.y-POOL_EYE); camera.position.y=newFootY+POOL_EYE; } } }
+
+    renderer.domElement.addEventListener('click',(e)=>{ if(currentScene!==poolScene)return; if(elevatorMenuOpen)return; if(altToggling)return; const mouse=new THREE.Vector2((e.clientX/window.innerWidth)*2-1,-(e.clientY/window.innerHeight)*2+1); const raycaster=new THREE.Raycaster(); raycaster.setFromCamera(mouse,camera); const meshes=poolButtons.map(b=>b.mesh); const intersects=raycaster.intersectObjects(meshes); if(intersects.length>0){ const hit=intersects[0]; const idx=meshes.indexOf(hit.object); if(idx>=0){ window.open(poolButtons[idx].url,'_blank'); } } });
+
+    // ===== 主循环 =====
+    function animate(){
+      requestAnimationFrame(animate);
+      const now=performance.now();
+      const dt=Math.min((now-(animate.lastTime||now))/1000,0.05);
+      animate.lastTime=now;
+      if(standing&&standProgress<1&&!isViewingPaper&&!isSitting){
+        standProgress=Math.min(1,standProgress+dt/1.1);
+        const t=smoothstep(standProgress);
+        camera.position.y=SIT_Y+(STAND_Y-SIT_Y)*t;
+        camera.position.y+=Math.sin(standProgress*Math.PI)*0.02;
+        camera.position.z=SIT_Z+Math.sin(standProgress*Math.PI)*0.05;
+        if(standProgress>=1){standProgress=1;canMove=true;camera.position.y=STAND_Y;}
+      }
+      if(canMove)updateMovement(dt);
+      updateSitAnimation(dt);
+      if(currentScene===poolScene){
+        updateElevator(dt);
+        updateRiding();
+        if(elevatorState.moving){
+          camera.position.x=0;
+          camera.position.z=0;
+          camera.position.y=elevatorState.y+POOL_EYE;
+        } else if(elevatorState.riding){
+          camera.position.y=elevatorState.y+POOL_EYE;
+        }
+      }
+      camera.rotation.set(pitchAngle,yawAngle,0);
+      if(currentScene===scene)updatePetals(now*0.001,dt);
+      if(currentScene===poolScene)updateWater(now*0.001);
+      if(currentScene===scene){ checkPaperLook(); checkNotebookLook(); checkChairSit(); }
+      else if(currentScene===poolScene){ checkPoolGate(); updateElevatorPrompt(); }
+      updateMobileActionBtn();
+      renderer.render(currentScene,camera);
+    }
+
+    window.addEventListener('resize',()=>{ if(cssForced){camera.aspect=innerHeight/innerWidth;camera.updateProjectionMatrix();renderer.setSize(innerHeight,innerWidth);} else {camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);} });
+    camera.position.set(0,SIT_Y,SIT_Z); camera.rotation.set(pitchAngle,yawAngle,0); animate();
+  </script>
+</body>
+</html>
